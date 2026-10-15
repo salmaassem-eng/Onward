@@ -5,7 +5,8 @@ type FormFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export default function FormField({ label, id, error, ...inputProps }: FormFieldProps) {
-  return (
+  const errorId=`${id}-error`;;
+    return (
     <div>
       <label htmlFor={id} className="mb-2 block text-sm font-medium text-stone-700">
         {label}
@@ -17,7 +18,7 @@ export default function FormField({ label, id, error, ...inputProps }: FormField
           error ? "border-red-400" : "border-stone-200 focus:border-green-500"
         }`}
       />
-      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
+      {error && <p id={errorId} className="mt-1.5 text-sm text-red-500">{error}</p>}
     </div>
   );
 }
