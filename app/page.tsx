@@ -15,11 +15,11 @@ export default function Home() {
         <Hero />
         <AppPreview />
         <Features />
-        {/* <JourneyMap />
-        <Testimonials />
+         <JourneyMap />
+        {/*<Testimonials />
         <CtaBanner /> */}
       </main>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }
