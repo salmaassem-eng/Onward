@@ -1,23 +1,32 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-export default function Logo() {
+type LogoProps = {
+  variant?: "onDark" | "onLight";
+  size?: "md" | "lg";
+};
+
+
+export default function Logo({ variant = "onDark", size = "lg" }: LogoProps) {
+    const isLarge = size === "lg";
+
   return (
     <Link href="/" className="flex items-center gap-3">
-      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+      <span
+        className={`flex items-center justify-center rounded-xl bg-green-600 ${
+          isLarge ? "h-11 w-11" : "h-9 w-9"
+        }`}
+      >
+        <ArrowRight
+          className={isLarge ? "h-5 w-5 text-white" : "h-4 w-4 text-white"}
+          strokeWidth={2.5}
+        />
       </span>
-      <span className="font-[family-name:var(--font-jakarta)] text-2xl font-bold text-white">
+      <span
+        className={`font-heading font-bold ${
+          isLarge ? "text-2xl" : "text-xl"
+        } ${variant === "onDark" ? "text-white" : "text-stone-900"}`}
+      >
         Onward
       </span>
     </Link>
