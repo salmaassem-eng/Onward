@@ -18,6 +18,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Database (Neon)
+
+The app uses Neon Postgres for account signup and login. Run `neon login` and
+`neon deploy` to link the project and pull its database URLs into `.env.local`.
+`DATABASE_URL` is used for application queries; `DATABASE_URL_UNPOOLED` is used
+for schema migrations.
+
+After changing `db/schema.ts`, generate and apply a migration:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+The `GET /api/health/db` endpoint checks the app's Neon database connection.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

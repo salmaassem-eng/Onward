@@ -10,6 +10,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+    --color-cream: #f8f8f4;
+  --color-ink: #1c1917;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +27,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.font-heading {
+  font-family: var(--font-jakarta), sans-serif;
+}
 
 @keyframes glow-drift {
   0%,
@@ -48,3 +53,25 @@ body {
     animation: none;
   }
 }
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.breathe {
+  transform-origin: left center;
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe {
+    animation: none;
+  }
+}
+
