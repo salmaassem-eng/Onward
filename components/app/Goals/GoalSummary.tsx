@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { formatTargetDate } from "@/lib/goals";
+import type { GoalView } from "@/lib/goals";
 import { categoryStyles } from "./goal-styles";
-import type { GoalData } from "./GoalCard";
 
-export default function GoalSummary({ goal }: { goal: GoalData }) {
+export default function GoalSummary({ goal }: { goal: GoalView }) {
   const style = categoryStyles[goal.category];
 
   return (
@@ -14,7 +13,7 @@ export default function GoalSummary({ goal }: { goal: GoalData }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <span
-            className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${style.badge}`}
+            className={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${style.chip}`}
           >
             {goal.category}
           </span>
@@ -36,9 +35,9 @@ export default function GoalSummary({ goal }: { goal: GoalData }) {
 
       <div className="mt-3 flex justify-between gap-4 text-sm text-stone-400">
         <span className="truncate">
-          {goal.nextStep ? `Next: ${goal.nextStep}` : ""}
+          {goal.current ? `Next: ${goal.current}` : "All steps complete"}
         </span>
-        <span className="shrink-0">{formatTargetDate(goal.targetDate)}</span>
+        <span className="shrink-0">{goal.targetLabel}</span>
       </div>
     </Link>
   );

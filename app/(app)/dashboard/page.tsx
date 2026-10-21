@@ -1,25 +1,19 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
 import { CalendarCheck, Target } from "lucide-react";
-import { db } from "@/db";
-import { goals } from "@/db/schema";
 import { requireUser } from "@/lib/session";
+import { getGoalsForUser } from "@/lib/goals-data";
 import Greeting from "@/components/app/Greeting";
 import ActivityCard, { type Level } from "@/components/app/ActivityCard";
 import StatCard from "@/components/app/StatCard";
 import ContinueCard from "@/components/app/ContinueCard";
 import EmptyState from "@/components/app/EmptyState";
-import GoalSummary from "@/components/app/GoalSummary";
+import GoalSummary from "@/components/app/Goals/GoalSummary";
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name.split(" ")[0];
 
-  const userGoals = await db
-    .select()
-    .from(goals)
-    .where(eq(goals.userId, user.id))
-    .orderBy(desc(goals.id));
+  const userGoals = await getGoalsForUser(user.id);
 
   const stats = {
     activeGoals: userGoals.filter((g) => g.progress < 100).length,

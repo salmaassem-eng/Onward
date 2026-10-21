@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   integer,
   pgTable,
@@ -6,6 +7,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import { CATEGORIES } from "@/lib/goals";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -32,10 +34,27 @@ export const goals = pgTable("goals", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   category: text("category", { enum: CATEGORIES }).notNull(),
-  progress: integer("progress").notNull().default(0),
-  nextStep: text("next_step"),
+  description: text("description"),
   targetDate: date("target_date"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
+
+export const goalSteps = pgTable("goal_steps", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  goalId: integer("goal_id")
+    .notNull()
+    .references(() => goals.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+  completed: boolean("completed").notNull().default(false),
+});
+
+export const goalsRelations = relations(goals, ({ many }) => ({
+  steps: many(goalSteps),
+}));
+
+export const goalStepsRelations = relations(goalSteps, ({ one }) => ({
+  goal: one(goals, { fields: [goalSteps.goalId], references: [goals.id] }),
+}));
