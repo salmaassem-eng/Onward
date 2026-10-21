@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import FormField from "./FormField";
 import Button from "./Button";
@@ -12,6 +13,7 @@ export default function SignupForm() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<SignupErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,13 +26,21 @@ export default function SignupForm() {
 
     setIsSubmitting(true);
     try {
-      // TODO: call the signup API here.
-      // On "email already used": toast.error("This email is already registered");
-      // On success: toast.success("Account created!") then redirect.
-      console.log({ name, email, password });
-      toast.info("Form is valid. Backend comes next.");
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (response.status === 409) {
+        toast.error("This email is already registered.");
+      } else if (!response.ok) {
+        toast.error("Unable to create your account. Please try again.");
+      } else {
+        toast.success("Account created!");
+      }
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Unable to reach the server. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import FormField from "./FormField";
 import Button from "./Button";
+import { login } from "@/app/actions/auth";
 import { validateLogin, type LoginErrors } from "@/lib/validation";
 
 export default function LoginForm() {
@@ -11,6 +13,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,10 +26,16 @@ export default function LoginForm() {
 
     setIsSubmitting(true);
     try {
-      // TODO: call the login API here.
-      // On failure, show: toast.error("Wrong email or password");
-      console.log({ email, password });
-      toast.info("Form is valid. Backend comes next.");
+      const result = await login({ email, password });
+
+      if (!result.ok) {
+        if (result.errors) setErrors(result.errors);
+        if (result.message) toast.error(result.message);
+        return; // finally still runs and re-enables the button
+      }
+
+      router.push("/dashboard");
+      router.refresh();
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
