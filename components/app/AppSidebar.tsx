@@ -1,0 +1,79 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
+import Logo from "@/components/Logo";
+import { logout } from "@/app/actions/auth";
+import type { SessionUser } from "@/lib/session";
+import { navItems, settingsItem } from "./nav-items";
+
+type NavItem = (typeof navItems)[number];
+
+function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${
+        active
+          ? "bg-green-50 text-green-700"
+          : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+      }`}
+    >
+      <Icon className="h-5 w-5" />
+      {item.label}
+      {active && <span className="ml-auto h-2 w-2 rounded-full bg-green-500" />}
+    </Link>
+  );
+}
+
+export default function AppSidebar({ user }: { user: SessionUser }) {
+  const pathname = usePathname();
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  return (
+    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col border-r border-stone-200 bg-white lg:flex">
+      <div className="px-6 pb-4 pt-8">
+        <Logo variant="onLight" size="md" href="/dashboard" />
+      </div>
+
+      <nav className="flex-1 space-y-1 px-3 py-4">
+        {navItems.map((item) => (
+          <NavLink key={item.href} item={item} active={isActive(item.href)} />
+        ))}
+      </nav>
+
+      <div className="border-t border-stone-200 px-3 py-4">
+        <NavLink item={settingsItem} active={isActive(settingsItem.href)} />
+
+        <form action={logout}>
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium text-stone-600 transition hover:bg-red-50 hover:text-red-600"
+          >
+            <LogOut className="h-5 w-5" />
+            Log out
+          </button>
+        </form>
+
+        <Link
+          href="/settings"
+          className="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-stone-50"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-sm font-semibold uppercase text-green-700">
+            {user.name[0]}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-stone-900">
+              {user.name}
+            </span>
+            <span className="block text-xs text-stone-400">View profile</span>
+          </span>
+        </Link>
+      </div>
+    </aside>
+  );
+}

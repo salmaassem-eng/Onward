@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import FormField from "./FormField";
 import Button from "./Button";
+import { signup } from "@/app/actions/auth";
 import { validateSignup, type SignupErrors } from "@/lib/validation";
 
 export default function SignupForm() {
@@ -25,22 +26,22 @@ export default function SignupForm() {
     }
 
     setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
 
-      if (response.status === 409) {
-        toast.error("This email is already registered.");
-      } else if (!response.ok) {
-        toast.error("Unable to create your account. Please try again.");
-      } else {
-        toast.success("Account created!");
+    try {
+      const result = await signup({ name, email, password });
+
+      if (!result.ok) {
+        if (result.errors) setErrors(result.errors);
+        if (result.message) toast.error(result.message);
+        return;
       }
-    } catch {
-      toast.error("Unable to reach the server. Please try again.");
+
+      toast.success("Account created!");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

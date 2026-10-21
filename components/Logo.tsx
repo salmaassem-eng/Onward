@@ -4,14 +4,19 @@ import { ArrowRight } from "lucide-react";
 type LogoProps = {
   variant?: "onDark" | "onLight";
   size?: "md" | "lg";
+  href?: string;
 };
 
 
-export default function Logo({ variant = "onDark", size = "lg" }: LogoProps) {
+export default function Logo({
+  variant = "onDark",
+  size = "lg",
+  href = "/",
+}: LogoProps) {
     const isLarge = size === "lg";
 
   return (
-    <Link href="/" className="flex items-center gap-3">
+    <Link href={href} className="flex items-center gap-3">
       <span
         className={`flex items-center justify-center rounded-xl bg-green-600 ${
           isLarge ? "h-11 w-11" : "h-9 w-9"
