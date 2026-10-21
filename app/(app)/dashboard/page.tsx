@@ -40,8 +40,8 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+      <div className="grid items-stretch gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-3 lg:h-full">
           <ActivityCard
             levels={monthLevels}
             activeDays={stats.activeDays}
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
             hours={stats.hours}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:col-span-2">
+        <div className="grid grid-cols-2 gap-4 lg:col-span-2 lg:h-full lg:grid-rows-2">
           <StatCard
             tone="green"
             value={stats.streak}

@@ -26,7 +26,7 @@ export default function ActivityCard({
   ];
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-6">
+    <div className="rounded-2xl border border-stone-200 bg-white p-6 lg:h-full">
       <div className="flex items-center justify-between">
         <h2 className="font-heading font-semibold text-stone-900">This month</h2>
         <div className="flex items-center gap-4 text-xs text-stone-400">
