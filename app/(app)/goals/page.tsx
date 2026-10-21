@@ -1,39 +1,59 @@
-import { Target } from "lucide-react";
+import { eq } from "drizzle-orm";
+import { Plus, Target } from "lucide-react";
+import { db } from "@/db";
+import { goals } from "@/db/schema";
+import { toGoalView } from "@/lib/goals";
 import { requireUser } from "@/lib/session";
-import { getGoalsForUser } from "@/lib/goals-data";
 import PageHeader from "@/components/app/PageHeader";
 import EmptyState from "@/components/app/EmptyState";
-import GoalForm from "@/components/app/Goals/GoalForm";
-import GoalsFilter from "@/components/app/Goals/GoalsFilter";
+import GoalsBoard from "@/components/app/Goals/GoalsFilter";
+import OverallProgress from "@/components/app/Goals/OverallProgress";
+import Button from "@/components/starterPage/Button";
 
 export default async function GoalsPage() {
   const user = await requireUser();
 
-  const userGoals = await getGoalsForUser(user.id);
+  const rows = await db.query.goals.findMany({
+    where: eq(goals.userId, user.id),
+    with: { steps: { orderBy: (s, { asc }) => [asc(s.position)] } },
+    orderBy: (g, { desc }) => [desc(g.id)],
+  });
+  const goalViews = rows.map(toGoalView);
+
+  const active = goalViews.filter((g) => g.progress < 100).length;
+  const areas = new Set(goalViews.map((g) => g.category)).size;
+
+  const subtitle =
+    goalViews.length === 0
+      ? "Everything you want to achieve, in one place."
+      : `${active} active ${active === 1 ? "goal" : "goals"} across ${areas} ${
+          areas === 1 ? "area" : "areas"
+        }`;
 
   return (
     <>
-      <PageHeader
-        title="Goals"
-        subtitle="Everything you want to achieve, in one place."
-      />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader title="Your Goals" subtitle={subtitle} />
+        <Button href="/goals/new" size="lg">
+          <Plus className="mr-2 h-4 w-4" />
+          New goal
+        </Button>
+      </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_22rem]">
-        <section className="space-y-4">
-          {userGoals.length === 0 ? (
-            <EmptyState
-              icon={Target}
-              title="No goals yet"
-              text="Create your first goal on the right and break it into actionable steps."
-            />
-          ) : (
-            <GoalsFilter goals={userGoals} />
-          )}
-        </section>
-
-        <aside>
-          <GoalForm />
-        </aside>
+      <div className="mt-8">
+        {goalViews.length === 0 ? (
+          <EmptyState
+            icon={Target}
+            title="No goals yet"
+            text="Create your first goal and break it into steps. Your progress builds from them."
+            action={{ href: "/goals/new", label: "Create a goal" }}
+          />
+        ) : (
+          <>
+            <GoalsBoard goals={goalViews} />
+            <OverallProgress goals={goalViews} />
+          </>
+        )}
       </div>
     </>
   );
