@@ -1,5 +1,6 @@
 "use server";
 
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -16,10 +17,10 @@ import {
 export type AuthResult =
   | { ok: true }
   | {
-      ok: false;
-      errors?: { name?: string; email?: string; password?: string };
-      message?: string;
-    };
+    ok: false;
+    errors?: { name?: string; email?: string; password?: string };
+    message?: string;
+  };
 
 // compared against when the email doesn't exist, so response time doesn't leak which emails are registered
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
@@ -29,6 +30,10 @@ export async function signup(values: SignupValues): Promise<AuthResult> {
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   const email = values.email.trim().toLowerCase();
+  const ip = await getClientIp();
+  if (!(await rateLimit(`signup:${ip}`, 5, 60 * 60 * 1000))) {
+    return { ok: false, message: "Too many attempts. Try again later." };
+  }
 
   const [existing] = await db
     .select({ id: users.id })
@@ -55,6 +60,10 @@ export async function login(values: LoginValues): Promise<AuthResult> {
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   const email = values.email.trim().toLowerCase();
+  const ip = await getClientIp();
+  if (!(await rateLimit(`login:${ip}:${email}`, 5, 15 * 60 * 1000))) {
+    return { ok: false, message: "Too many attempts. Try again in a few minutes." };
+  }
 
   const [user] = await db
     .select()
