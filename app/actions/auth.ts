@@ -27,8 +27,11 @@ const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
 
 export async function signup(values: SignupValues): Promise<AuthResult> {
   const errors = validateSignup(values);
-  if (Object.keys(errors).length > 0) return { ok: false, errors };
-
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, errors };
+  } else if (new TextEncoder().encode(values.password).length > 72) {
+    errors.password = "Password must be under 72 characters.";
+  }
   const email = values.email.trim().toLowerCase();
   const ip = await getClientIp();
   if (!(await rateLimit(`signup:${ip}`, 5, 60 * 60 * 1000))) {

@@ -1,3 +1,4 @@
+import "server-only";
 import crypto from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
@@ -69,6 +70,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   }
 
   return { id: row.id, name: row.name, email: row.email };
+
 });
 
 export async function requireUser(): Promise<SessionUser> {
