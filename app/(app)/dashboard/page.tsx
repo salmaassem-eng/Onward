@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { CalendarCheck, Target } from "lucide-react";
 import { requireUser } from "@/lib/session";
-import { getGoalsForUser } from "@/lib/goals-data";
 import Greeting from "@/components/app/Greeting";
 import ActivityCard, { type Level } from "@/components/app/ActivityCard";
 import StatCard from "@/components/app/StatCard";
 import ContinueCard from "@/components/app/ContinueCard";
 import EmptyState from "@/components/app/EmptyState";
 import GoalSummary from "@/components/app/Goals/GoalSummary";
+import { getUserGoals } from "@/lib/goal-queries";
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name.split(" ")[0];
 
-  const userGoals = await getGoalsForUser(user.id);
+  const userGoals = await getUserGoals(user.id);
+  const focusGoal = userGoals
+    .filter((g) => g.nextAction)
+    .sort((a, b) => b.progress - a.progress)[0];
 
   const stats = {
     activeGoals: userGoals.filter((g) => g.progress < 100).length,
@@ -75,7 +78,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <ContinueCard />
+      <ContinueCard goal={focusGoal} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <section>

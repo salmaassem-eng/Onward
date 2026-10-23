@@ -7,7 +7,7 @@ export default function GoalSummary({ goal }: { goal: GoalView }) {
 
   return (
     <Link
-      href="/goals"
+      href={`/journey?goal=${goal.id}`}
       className="block rounded-2xl border border-stone-200 bg-white p-5 transition hover:border-stone-300"
     >
       <div className="flex items-start justify-between gap-4">
@@ -35,8 +35,7 @@ export default function GoalSummary({ goal }: { goal: GoalView }) {
 
       <div className="mt-3 flex justify-between gap-4 text-sm text-stone-400">
         <span className="truncate">
-          {goal.current ? `Next: ${goal.current}` : "All steps complete"}
-        </span>
+          {goal.nextAction ? `Next: ${goal.nextAction.title}` : "All steps complete"}        </span>
         <span className="shrink-0">{goal.targetLabel}</span>
       </div>
     </Link>

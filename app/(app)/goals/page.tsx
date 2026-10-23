@@ -1,25 +1,16 @@
-import { eq } from "drizzle-orm";
 import { Plus, Target } from "lucide-react";
-import { db } from "@/db";
-import { goals } from "@/db/schema";
-import { toGoalView } from "@/lib/goals";
 import { requireUser } from "@/lib/session";
 import PageHeader from "@/components/app/PageHeader";
 import EmptyState from "@/components/app/EmptyState";
 import GoalsBoard from "@/components/app/Goals/GoalsFilter";
 import OverallProgress from "@/components/app/Goals/OverallProgress";
 import Button from "@/components/starterPage/Button";
+import { getUserGoals } from "@/lib/goal-queries";
 
 export default async function GoalsPage() {
   const user = await requireUser();
 
-  const rows = await db.query.goals.findMany({
-    where: eq(goals.userId, user.id),
-    with: { steps: { orderBy: (s, { asc }) => [asc(s.position)] } },
-    orderBy: (g, { desc }) => [desc(g.id)],
-  });
-  const goalViews = rows.map(toGoalView);
-
+const goalViews = await getUserGoals(user.id);
   const active = goalViews.filter((g) => g.progress < 100).length;
   const areas = new Set(goalViews.map((g) => g.category)).size;
 
