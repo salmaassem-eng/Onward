@@ -55,12 +55,34 @@ export const goalSteps = pgTable("goal_steps", {
   title: text("title").notNull(),
   position: integer("position").notNull(),
   completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+
 });
+
+
+export const goalSubsteps = pgTable("goal_substeps", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  stepId: integer("step_id")
+    .notNull()
+    .references(() => goalSteps.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const goalStepsRelations = relations(goalSteps, ({ one, many }) => ({
+  goal: one(goals, { fields: [goalSteps.goalId], references: [goals.id] }),
+  substeps: many(goalSubsteps),
+}));
+
+export const goalSubstepsRelations = relations(goalSubsteps, ({ one }) => ({
+  step: one(goalSteps, {
+    fields: [goalSubsteps.stepId],
+    references: [goalSteps.id],
+  }),
+}));
 
 export const goalsRelations = relations(goals, ({ many }) => ({
   steps: many(goalSteps),
-}));
-
-export const goalStepsRelations = relations(goalSteps, ({ one }) => ({
-  goal: one(goals, { fields: [goalSteps.goalId], references: [goals.id] }),
 }));
