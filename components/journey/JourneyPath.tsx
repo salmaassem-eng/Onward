@@ -36,6 +36,8 @@ export default function JourneyPath({
     startTransition(async () => {
       try {
         await setItemCompleted(kind, id, completed);
+        if (completed) toast.success("Nice. Marked as finished.");
+        else toast.info("Moved back to to-do.");
       } catch {
         toast.error("Couldn't save that. Please try again.");
       }
@@ -52,8 +54,8 @@ export default function JourneyPath({
           {steps.length === 0
             ? "No steps yet."
             : finished
-            ? "Every step is finished."
-            : `You're on step ${currentIndex + 1} of ${steps.length}.`}
+              ? "Every step is finished."
+              : `You're on step ${currentIndex + 1} of ${steps.length}.`}
         </p>
       </div>
 
@@ -73,9 +75,8 @@ export default function JourneyPath({
               {/* line down to the next marker */}
               <span
                 aria-hidden
-                className={`absolute bottom-0 left-5 top-10 w-0.5 -translate-x-1/2 ${
-                  isDone ? "bg-green-300" : "bg-stone-200"
-                }`}
+                className={`absolute bottom-0 left-5 top-10 w-0.5 -translate-x-1/2 ${isDone ? "bg-green-300" : "bg-stone-200"
+                  }`}
               />
 
               {/* marker */}
@@ -84,13 +85,12 @@ export default function JourneyPath({
                   <span className="absolute inset-0 animate-ping rounded-full bg-green-400/30 motion-reduce:animate-none" />
                 )}
                 <span
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
-                    isDone
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${isDone
                       ? "bg-green-500 text-white"
                       : isCurrent
-                      ? "border-2 border-green-500 bg-white text-green-700"
-                      : "border-2 border-stone-200 bg-white text-stone-400"
-                  }`}
+                        ? "border-2 border-green-500 bg-white text-green-700"
+                        : "border-2 border-stone-200 bg-white text-stone-400"
+                    }`}
                 >
                   {isDone ? (
                     <Check className="h-5 w-5" strokeWidth={3} />
@@ -102,11 +102,10 @@ export default function JourneyPath({
 
               {/* card */}
               <div
-                className={`min-w-0 flex-1 rounded-2xl border ${
-                  isCurrent
+                className={`min-w-0 flex-1 rounded-2xl border ${isCurrent
                     ? "border-green-200 bg-green-50"
                     : "border-stone-200 bg-white"
-                }`}
+                  }`}
               >
                 <button
                   type="button"
@@ -122,20 +121,18 @@ export default function JourneyPath({
                       </p>
                     )}
                     <p
-                      className={`font-heading font-semibold ${
-                        isCurrent
+                      className={`font-heading font-semibold ${isCurrent
                           ? "text-lg text-stone-900"
                           : isDone
-                          ? "text-stone-500"
-                          : "text-stone-600"
-                      }`}
+                            ? "text-stone-500"
+                            : "text-stone-600"
+                        }`}
                     >
                       {step.title}
                     </p>
                     <div
-                      className={`mt-2 h-1.5 rounded-full ${
-                        isCurrent ? "bg-white" : "bg-stone-100"
-                      }`}
+                      className={`mt-2 h-1.5 rounded-full ${isCurrent ? "bg-white" : "bg-stone-100"
+                        }`}
                     >
                       <div
                         className="h-full rounded-full bg-green-500 transition-all"
@@ -151,9 +148,8 @@ export default function JourneyPath({
                         : `${step.progress}%`}
                     </span>
                     <ChevronDown
-                      className={`h-4 w-4 text-stone-400 transition ${
-                        open ? "rotate-180" : ""
-                      }`}
+                      className={`h-4 w-4 text-stone-400 transition ${open ? "rotate-180" : ""
+                        }`}
                     />
                   </div>
                 </button>
@@ -181,13 +177,11 @@ export default function JourneyPath({
                                 onClick={() =>
                                   setDone("substep", sub.id, !sub.completed)
                                 }
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition disabled:cursor-default ${
-                                  sub.completed
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition disabled:cursor-default ${sub.completed
                                     ? "border-green-500 bg-green-500 text-white"
-                                    : `border-stone-300 bg-white ${
-                                        canToggle ? "hover:border-green-500" : ""
-                                      }`
-                                }`}
+                                    : `border-stone-300 bg-white ${canToggle ? "hover:border-green-500" : ""
+                                    }`
+                                  }`}
                               >
                                 {sub.completed && (
                                   <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -198,8 +192,8 @@ export default function JourneyPath({
                                   sub.completed
                                     ? "text-stone-400 line-through"
                                     : sub.id === nextSubId
-                                    ? "font-semibold text-stone-900"
-                                    : "text-stone-600"
+                                      ? "font-semibold text-stone-900"
+                                      : "text-stone-600"
                                 }
                               >
                                 {sub.title}
@@ -256,26 +250,23 @@ export default function JourneyPath({
         {/* destination */}
         <li className="relative flex gap-4">
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-              finished
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${finished
                 ? "bg-green-500 text-white"
                 : "border-2 border-dashed border-stone-300 text-stone-400"
-            }`}
+              }`}
           >
             <Flag className="h-4 w-4" />
           </span>
           <div className="pt-0.5">
             <p
-              className={`text-xs font-semibold uppercase tracking-wider ${
-                finished ? "text-green-700" : "text-stone-400"
-              }`}
+              className={`text-xs font-semibold uppercase tracking-wider ${finished ? "text-green-700" : "text-stone-400"
+                }`}
             >
               {finished ? "Goal reached" : "Destination"}
             </p>
             <p
-              className={`font-heading font-semibold ${
-                finished ? "text-stone-900" : "text-stone-500"
-              }`}
+              className={`font-heading font-semibold ${finished ? "text-stone-900" : "text-stone-500"
+                }`}
             >
               {goalTitle}
             </p>

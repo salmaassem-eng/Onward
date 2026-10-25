@@ -1,8 +1,9 @@
-import Link from "next/link";
-import { Pencil } from "lucide-react";
+
 import type { GoalView } from "@/lib/goals";
 import { categoryStyles } from "@/components/app/Goals/goal-styles";
 import NextStepBar from "./NextStepBar";
+import GoalActions from "./GoalActions";
+
 
 export default function GoalHero({ goal }: { goal: GoalView }) {
   const style = categoryStyles[goal.category];
@@ -23,13 +24,7 @@ export default function GoalHero({ goal }: { goal: GoalView }) {
                 : `Target ${goal.targetLabel}`}
             </span>
           </div>
-          <Link
-            href={`/goals/${goal.id}`}
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-stone-500 transition hover:bg-stone-50 hover:text-stone-900"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit goal
-          </Link>
+          <GoalActions goalId={goal.id} title={goal.title} />
         </div>
 
         <h2 className="font-heading mt-5 text-3xl font-bold leading-tight text-stone-900 sm:text-4xl">

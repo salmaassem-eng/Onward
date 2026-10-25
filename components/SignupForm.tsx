@@ -6,15 +6,16 @@ import { toast } from "react-toastify";
 import FormField from "./FormField";
 import Button from "./Button";
 import { signup } from "@/app/actions/auth";
+import { reportErrors } from "@/lib/notify";
 import { validateSignup, type SignupErrors } from "@/lib/validation";
 
 export default function SignupForm() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<SignupErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -22,16 +23,19 @@ export default function SignupForm() {
     const validationErrors = validateSignup({ name, email, password });
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      reportErrors(validationErrors);
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const result = await signup({ name, email, password });
 
       if (!result.ok) {
-        if (result.errors) setErrors(result.errors);
+        if (result.errors) {
+          setErrors(result.errors);
+          reportErrors(result.errors);
+        }
         if (result.message) toast.error(result.message);
         return;
       }
@@ -39,8 +43,7 @@ export default function SignupForm() {
       toast.success("Account created!");
       router.push("/dashboard");
       router.refresh();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);

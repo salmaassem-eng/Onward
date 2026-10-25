@@ -6,14 +6,15 @@ import { toast } from "react-toastify";
 import FormField from "./FormField";
 import Button from "./Button";
 import { login } from "@/app/actions/auth";
+import { reportErrors } from "@/lib/notify";
 import { validateLogin, type LoginErrors } from "@/lib/validation";
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,6 +22,7 @@ export default function LoginForm() {
     const validationErrors = validateLogin({ email, password });
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      reportErrors(validationErrors);
       return;
     }
 
@@ -29,9 +31,12 @@ export default function LoginForm() {
       const result = await login({ email, password });
 
       if (!result.ok) {
-        if (result.errors) setErrors(result.errors);
+        if (result.errors) {
+          setErrors(result.errors);
+          reportErrors(result.errors);
+        }
         if (result.message) toast.error(result.message);
-        return; // finally still runs and re-enables the button
+        return;
       }
 
       router.push("/dashboard");
