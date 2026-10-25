@@ -8,8 +8,8 @@ export default async function NewGoalPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/goals" className="text-sm text-stone-500 hover:text-stone-900">
-        ← Back to goals
+      <Link href="/journey" className="text-sm text-stone-500 hover:text-stone-900">
+        ← Back to journey
       </Link>
       <div className="mb-8 mt-4">
         <PageHeader

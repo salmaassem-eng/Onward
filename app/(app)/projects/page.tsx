@@ -6,9 +6,15 @@ import EmptyState from "@/components/app/EmptyState";
 import ProjectsBoard from "@/components/projects/ProjectsBoard";
 import ButtonLink from "@/components/starterPage/Button";
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string }>;
+}) {
   const user = await requireUser();
+  const { open } = await searchParams;
   const projects = await getUserProjects(user.id);
+  const openId = Number(open);
 
   const active = projects.filter((p) => p.state === "active").length;
   const subtitle =
@@ -35,8 +41,10 @@ export default async function ProjectsPage() {
             action={{ href: "/projects/new", label: "Create a project" }}
           />
         ) : (
-          <ProjectsBoard projects={projects} />
-        )}
+          <ProjectsBoard
+            projects={projects}
+            initialOpenId={projects.some((p) => p.id === openId) ? openId : null}
+          />)}
       </div>
     </>
   );

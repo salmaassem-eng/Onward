@@ -20,6 +20,8 @@ export type ProjectResult =
   | { ok: false; errors?: ProjectFormErrors; message?: string };
 
 function refresh() {
+  revalidatePath("/week");
+  revalidatePath("/journey");
   revalidatePath("/projects");
   revalidatePath("/dashboard");
 }

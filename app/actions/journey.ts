@@ -53,6 +53,6 @@ export async function setItemCompleted(
   }
 
   revalidatePath("/journey");
-  revalidatePath("/goals");
+  revalidatePath("/week");
   revalidatePath("/dashboard");
 }

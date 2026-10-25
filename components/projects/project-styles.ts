@@ -1,11 +1,11 @@
 import type { ProjectState } from "@/lib/projects";
 
 const palette = [
-  { avatar: "bg-green-600", bar: "bg-green-600" },
-  { avatar: "bg-violet-600", bar: "bg-violet-600" },
-  { avatar: "bg-sky-500", bar: "bg-sky-500" },
-  { avatar: "bg-amber-500", bar: "bg-amber-500" },
-  { avatar: "bg-rose-500", bar: "bg-rose-500" },
+  { avatar: "bg-green-600", bar: "bg-green-600", tint: "bg-green-50" },
+  { avatar: "bg-violet-600", bar: "bg-violet-600", tint: "bg-violet-50" },
+  { avatar: "bg-sky-500", bar: "bg-sky-500", tint: "bg-sky-50" },
+  { avatar: "bg-amber-500", bar: "bg-amber-500", tint: "bg-amber-50" },
+  { avatar: "bg-rose-500", bar: "bg-rose-500", tint: "bg-rose-50" },
 ];
 
 // each project keeps the same color, based on its id

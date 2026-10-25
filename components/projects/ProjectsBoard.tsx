@@ -14,9 +14,15 @@ const filters = [
 
 type Filter = (typeof filters)[number]["value"];
 
-export default function ProjectsBoard({ projects }: { projects: ProjectView[] }) {
+export default function ProjectsBoard({
+  projects,
+  initialOpenId = null,
+}: {
+  projects: ProjectView[];
+  initialOpenId?: number | null;
+}) {
+  const [selectedId, setSelectedId] = useState<number | null>(initialOpenId);
   const [filter, setFilter] = useState<Filter>("all");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const visible =
     filter === "all" ? projects : projects.filter((p) => p.state === filter);
@@ -31,11 +37,10 @@ export default function ProjectsBoard({ projects }: { projects: ProjectView[] })
             type="button"
             onClick={() => setFilter(f.value)}
             aria-pressed={filter === f.value}
-            className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
-              filter === f.value
+            className={`rounded-full border px-5 py-2 text-sm font-medium transition ${filter === f.value
                 ? "border-green-600 bg-green-600 text-white"
                 : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-            }`}
+              }`}
           >
             {f.label}
           </button>
@@ -47,14 +52,13 @@ export default function ProjectsBoard({ projects }: { projects: ProjectView[] })
           No {filter} projects.
         </p>
       ) : (
-        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onOpen={() => setSelectedId(project.id)}
-            />
-          ))}
+        <div className="mt-8 grid gap-5 md:grid-cols-2">          {visible.map((project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            onOpen={() => setSelectedId(project.id)}
+          />
+        ))}
         </div>
       )}
 

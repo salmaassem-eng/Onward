@@ -14,13 +14,13 @@ import {
 import { requireUser } from "@/lib/session";
 
 export type GoalResult =
-  | { ok: true }
+  | { ok: true; id?: number}
   | { ok: false; errors?: GoalFormErrors; message?: string };
 
 function refresh() {
-  revalidatePath("/goals");
   revalidatePath("/journey");
   revalidatePath("/dashboard");
+  revalidatePath("/week");
 }
 
 export async function createGoal(values: GoalFormValues): Promise<GoalResult> {
@@ -59,7 +59,7 @@ export async function createGoal(values: GoalFormValues): Promise<GoalResult> {
   if (subs.length > 0) await db.insert(goalSubsteps).values(subs);
 
   refresh();
-  return { ok: true };
+  return { ok: true, id: goal.id };
 }
 
 export async function updateGoal(
@@ -171,7 +171,7 @@ export async function updateGoal(
   if (subInserts.length > 0) await db.insert(goalSubsteps).values(subInserts);
 
   refresh();
-  return { ok: true };
+  return { ok: true, id};
 }
 
 export async function deleteGoal(id: number) {
