@@ -157,3 +157,30 @@ export const projectTasksRelations = relations(projectTasks, ({ one }) => ({
     references: [projectMilestones.id],
   }),
 }));
+
+//weekly view data
+
+export const planItems = pgTable("plan_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: date("date").notNull(),
+  // custom tasks use title/category/completed; linked tasks use one of the 4 ids
+  title: text("title"),
+  category: text("category", { enum: CATEGORIES }),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  goalStepId: integer("goal_step_id").references(() => goalSteps.id, { onDelete: "cascade" }),
+  goalSubstepId: integer("goal_substep_id").references(() => goalSubsteps.id, { onDelete: "cascade" }),
+  projectMilestoneId: integer("project_milestone_id").references(() => projectMilestones.id, { onDelete: "cascade" }),
+  projectTaskId: integer("project_task_id").references(() => projectTasks.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const planItemsRelations = relations(planItems, ({ one }) => ({
+  goalStep: one(goalSteps, { fields: [planItems.goalStepId], references: [goalSteps.id] }),
+  goalSubstep: one(goalSubsteps, { fields: [planItems.goalSubstepId], references: [goalSubsteps.id] }),
+  projectMilestone: one(projectMilestones, { fields: [planItems.projectMilestoneId], references: [projectMilestones.id] }),
+  projectTask: one(projectTasks, { fields: [planItems.projectTaskId], references: [projectTasks.id] }),
+}));

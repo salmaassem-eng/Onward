@@ -1,6 +1,8 @@
 import AppSidebar from "@/components/app/AppSidebar";
 import MobileNav from "@/components/app/MobileNav";
+import TimezoneSync from "@/components/app/TimezoneSync";
 import { requireUser } from "@/lib/session";
+import { getTimezone } from "@/lib/timezone";
 
 export default async function AppLayout({
   children,
@@ -11,6 +13,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-[#f8f8f4] lg:flex">
+      <TimezoneSync current={await getTimezone()} />
       <AppSidebar user={user} />
       <div className="min-w-0 flex-1">
         <MobileNav />

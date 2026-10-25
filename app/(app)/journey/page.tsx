@@ -5,6 +5,8 @@ import EmptyState from "@/components/app/EmptyState";
 import GoalList from "@/components/journey/GoalList";
 import GoalHero from "@/components/journey/GoalHero";
 import JourneyPath from "@/components/journey/JourneyPath";
+import { getUserProjects } from "@/lib/project-queries";
+import ConnectedProjects from "@/components/journey/ConnectedProjects";
 
 export default async function JourneyPage({
   searchParams,
@@ -13,7 +15,7 @@ export default async function JourneyPage({
 }) {
   const user = await requireUser();
   const { goal: goalParam } = await searchParams;
-  const goals = await getUserGoals(user.id);
+  const [goals, projects] = await Promise.all([getUserGoals(user.id), getUserProjects(user.id)]);
 
   const selected =
     goals.find((g) => String(g.id) === goalParam) ??
@@ -50,6 +52,10 @@ export default async function JourneyPage({
                 goalId={selected.id}
                 goalTitle={selected.title}
                 steps={selected.steps}
+              />
+              <ConnectedProjects
+                goalId={selected.id}
+                projects={projects.filter((p) => p.goalId === selected.id)}
               />
             </div>
           </div>
