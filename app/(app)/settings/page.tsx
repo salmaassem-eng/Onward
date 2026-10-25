@@ -9,8 +9,8 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader
-        title="Goals"
-        subtitle="Everything you want to achieve, in one place."
+        title="Settings"
+        subtitle="Manage your account, preferences and integrations."
       />
       <div className="mt-10">
         <EmptyState
