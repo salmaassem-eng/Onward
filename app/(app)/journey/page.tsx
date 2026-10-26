@@ -1,12 +1,10 @@
 import { Compass } from "lucide-react";
 import { getUserGoals } from "@/lib/goal-queries";
+import { getUserProjects } from "@/lib/project-queries";
 import { requireUser } from "@/lib/session";
 import EmptyState from "@/components/app/EmptyState";
-import GoalList from "@/components/journey/GoalList";
-import GoalHero from "@/components/journey/GoalHero";
-import JourneyPath from "@/components/journey/JourneyPath";
-import { getUserProjects } from "@/lib/project-queries";
-import ConnectedProjects from "@/components/journey/ConnectedProjects";
+import GoalGrid from "@/components/journey/GoalGrid";
+import JourneyPanel from "@/components/journey/JourneyPanel";
 
 export default async function JourneyPage({
   searchParams,
@@ -15,7 +13,11 @@ export default async function JourneyPage({
 }) {
   const user = await requireUser();
   const { goal: goalParam } = await searchParams;
-  const [goals, projects] = await Promise.all([getUserGoals(user.id), getUserProjects(user.id)]);
+
+  const [goals, projects] = await Promise.all([
+    getUserGoals(user.id),
+    getUserProjects(user.id),
+  ]);
 
   const selected =
     goals.find((g) => String(g.id) === goalParam) ??
@@ -43,22 +45,14 @@ export default async function JourneyPage({
             action={{ href: "/goals/new", label: "Create a goal" }}
           />
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
-            <GoalList goals={goals} selectedId={selected.id} />
-            <div className="min-w-0">
-              <GoalHero goal={selected} />
-              <JourneyPath
-                key={selected.id}
-                goalId={selected.id}
-                goalTitle={selected.title}
-                steps={selected.steps}
-              />
-              <ConnectedProjects
-                goalId={selected.id}
-                projects={projects.filter((p) => p.goalId === selected.id)}
-              />
-            </div>
-          </div>
+          <>
+            <GoalGrid goals={goals} selectedId={selected.id} />
+            <JourneyPanel
+              key={selected.id}
+              goal={selected}
+              projects={projects.filter((p) => p.goalId === selected.id)}
+            />
+          </>
         )}
       </div>
     </>

@@ -95,7 +95,7 @@ export default function ContinueCard({ goals }: { goals: GoalView[] }) {
                       <span className="text-sm font-semibold text-green-400">{goal.progress}%</span>
                     </div>
                   </div>
-                  <ButtonLink href={`/journey?goal=${goal.id}`} size="lg">Continue →</ButtonLink>
+                  <ButtonLink href={`/journey?goal=${goal.id}#journey`} size="lg">Continue →</ButtonLink>
                 </div>
               </div>
             );
