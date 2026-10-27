@@ -9,6 +9,7 @@ import {
 import { CATEGORIES } from "@/lib/goals";
 import { relations } from "drizzle-orm";
 import { PROJECT_STATUSES } from "../lib/projects";
+import { COURSE_PROVIDERS } from "../lib/learning";
 
 
 //login
@@ -91,6 +92,7 @@ export const goalSubstepsRelations = relations(goalSubsteps, ({ one }) => ({
 export const goalsRelations = relations(goals, ({ many }) => ({
   steps: many(goalSteps),
   projects: many(projects),
+  courses: many(courses),
 }));
 
 //projects data 
@@ -183,4 +185,58 @@ export const planItemsRelations = relations(planItems, ({ one }) => ({
   goalSubstep: one(goalSubsteps, { fields: [planItems.goalSubstepId], references: [goalSubsteps.id] }),
   projectMilestone: one(projectMilestones, { fields: [planItems.projectMilestoneId], references: [projectMilestones.id] }),
   projectTask: one(projectTasks, { fields: [planItems.projectTaskId], references: [projectTasks.id] }),
+}));
+
+
+//learning page 
+export const courses = pgTable("courses", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  goalId: integer("goal_id").references(() => goals.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  url: text("url"),
+  provider: text("provider", { enum: COURSE_PROVIDERS }),
+  thumbnailUrl: text("thumbnail_url"),
+  lastOpenedAt: timestamp("last_opened_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const courseModules = pgTable("course_modules", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  courseId: integer("course_id")
+    .notNull()
+    .references(() => courses.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+});
+
+export const courseLessons = pgTable("course_lessons", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  moduleId: integer("module_id")
+    .notNull()
+    .references(() => courseModules.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  url: text("url"),
+  position: integer("position").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const coursesRelations = relations(courses, ({ one, many }) => ({
+  goal: one(goals, { fields: [courses.goalId], references: [goals.id] }),
+  modules: many(courseModules),
+}));
+
+export const courseModulesRelations = relations(courseModules, ({ one, many }) => ({
+  course: one(courses, { fields: [courseModules.courseId], references: [courses.id] }),
+  lessons: many(courseLessons),
+}));
+
+export const courseLessonsRelations = relations(courseLessons, ({ one }) => ({
+  module: one(courseModules, {
+    fields: [courseLessons.moduleId],
+    references: [courseModules.id],
+  }),
 }));
