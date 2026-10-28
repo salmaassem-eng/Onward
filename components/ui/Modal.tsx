@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 const stack: symbol[] = []; // so Escape only closes the top-most modal
+const subscribeToPortalTarget = () => () => {};
+const getPortalTarget = () =>
+  document.querySelector<HTMLElement>("[data-app]") ?? document.body;
+const getServerPortalTarget = () => null;
 
 type ModalProps = {
   open: boolean;
@@ -25,13 +29,18 @@ export default function Modal({
 }: ModalProps) {
   const panel = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
+  const target = useSyncExternalStore(
+    subscribeToPortalTarget,
+    getPortalTarget,
+    getServerPortalTarget,
+  );
 
   useEffect(() => {
     closeRef.current = onClose;
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !target) return;
 
     const token = Symbol("modal");
     stack.push(token);
@@ -70,12 +79,9 @@ export default function Modal({
       document.body.style.overflow = overflow;
       previous?.focus();
     };
-  }, [open]);
+  }, [open, target]);
 
-  if (!open) return null;
-
-  // inside the app root, so the dark theme variables apply to the modal too
-  const target = document.querySelector("[data-app]") ?? document.body;
+  if (!open || !target) return null;
 
   return createPortal(
     <div

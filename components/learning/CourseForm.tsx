@@ -49,7 +49,7 @@ const fieldBase =
 const fieldOk = "border-stone-200 focus:border-green-500 focus:ring-green-500/40";
 const fieldBad = "border-red-400 focus:ring-red-400/30";
 const iconButton =
-  "rounded-lg p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-30 disabled:hover:bg-transparent";
+  "rounded-lg p-1.5 sm:p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-30 disabled:hover:bg-transparent";
 
 export default function CourseForm({ courseId, goals, initial }: CourseFormProps) {
   const router = useRouter();
@@ -267,7 +267,7 @@ export default function CourseForm({ courseId, goals, initial }: CourseFormProps
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="space-y-6 rounded-3xl border border-stone-200 bg-white p-6 sm:p-8"
+        className="space-y-6 rounded-3xl border border-stone-200 bg-white p-4 sm:p-8"
       >
         {isEdit && (
           <div className="flex items-center justify-between border-b border-stone-100 pb-5">

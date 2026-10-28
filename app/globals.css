@@ -54,6 +54,15 @@ body {
   }
 }
 
+/* iOS zooms the page when you tap an input smaller than 16px. This stops that on phones */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @keyframes breathe {
   0%,
   100% {

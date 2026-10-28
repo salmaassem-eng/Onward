@@ -58,7 +58,7 @@ export default function GoalHero({ goal }: { goal: GoalView }) {
           )}
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-heading text-4xl font-bold text-stone-900">
+          <p className="font-heading text-3xl sm:text-4xl font-bold text-stone-900">
             {goal.progress}%
           </p>
           <p className="text-sm text-stone-400">Overall progress</p>

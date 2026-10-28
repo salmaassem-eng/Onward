@@ -11,13 +11,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const [timezone, prefs] = await Promise.all([getTimezone(), getUserSettings(user.id)]);
 
   return (
-    <div data-app className="min-h-screen bg-cream text-stone-900 lg:flex">
+    <div data-app className="min-h-dvh bg-cream text-stone-900 lg:flex">
       <TimezoneSync current={timezone} />
       <ThemeSync theme={prefs.theme} />
       <AppSidebar user={user} />
       <div className="min-w-0 flex-1">
-        <MobileNav />
-        <main className="mx-auto w-full max-w-5xl px-6 py-10 lg:px-10 lg:py-12">
+        <MobileNav user={user} />
+        <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-12">
           {children}
         </main>
       </div>
