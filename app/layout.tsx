@@ -1,31 +1,27 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
-import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
-import Script from "next/script";
-
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-jakarta",
-});
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" });
 
 export const metadata: Metadata = {
   title: "Onward",
   description: "Your journey starts here.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const themeScript = `(function(){try{var m=document.cookie.match(/(?:^|; )theme=(light|dark|system)/);var t=m?m[1]:"light";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})();`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jakarta.variable}`}
+    >
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Script src="/newrelic.js" strategy="beforeInteractive" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-[family-name:var(--font-inter)] antialiased">
         {children}

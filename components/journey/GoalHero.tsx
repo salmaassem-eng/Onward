@@ -125,7 +125,7 @@ export default function GoalHero({ goal }: { goal: GoalView }) {
           ) : (
             <div className="mt-3 flex items-center gap-3">
               <Trophy className="h-6 w-6 text-green-400" />
-              <p className="text-stone-300">
+              <p className="text-white/80">
                 Every step is finished. Look how far you came.
               </p>
             </div>

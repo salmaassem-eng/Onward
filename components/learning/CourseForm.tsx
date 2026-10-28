@@ -574,7 +574,7 @@ export default function CourseForm({ courseId, goals, initial }: CourseFormProps
             <button
               type="button"
               onClick={addPasted}
-              className="mt-3 rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-700"
+              className="mt-3 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
             >
               Add these lessons
             </button>

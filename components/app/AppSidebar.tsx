@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 import { logout } from "@/app/actions/auth";
 import type { SessionUser } from "@/lib/session";
 import { navItems, settingsItem } from "./nav-items";
+import Avatar from "./Avatar";
 
 type NavItem = (typeof navItems)[number];
 
@@ -16,11 +17,10 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${
-        active
+      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition ${active
           ? "bg-green-50 text-green-700"
           : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
-      }`}
+        }`}
     >
       <Icon className="h-5 w-5" />
       {item.label}
@@ -63,13 +63,9 @@ export default function AppSidebar({ user }: { user: SessionUser }) {
           href="/settings"
           className="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-stone-50"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-sm font-semibold uppercase text-green-700">
-            {user.name[0]}
-          </span>
+          <Avatar name={user.name} version={user.avatarVersion} className="h-9 w-9 rounded-full text-sm" />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-stone-900">
-              {user.name}
-            </span>
+            <span className="block truncate text-sm font-semibold text-stone-900">{user.name}</span>
             <span className="block text-xs text-stone-400">View profile</span>
           </span>
         </Link>

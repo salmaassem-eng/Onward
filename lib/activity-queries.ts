@@ -15,8 +15,8 @@ import {
 import { summarizeActivity } from "./activity";
 import { dayFormatter, getTimezone } from "./timezone";
 
-export async function getActivitySummary(userId: number) {
-  const dayOf = dayFormatter(await getTimezone());
+export async function getActivitySummary(userId: number, timeZone?: string) {
+  const dayOf = dayFormatter(timeZone ?? (await getTimezone()));
 
   const [steps, subs, milestones, tasks, custom, lessons] = await Promise.all([
     db
@@ -52,7 +52,10 @@ export async function getActivitySummary(userId: number) {
           isNull(planItems.goalStepId),
           isNull(planItems.goalSubstepId),
           isNull(planItems.projectMilestoneId),
-          isNull(planItems.projectTaskId))),
+          isNull(planItems.projectTaskId),
+          isNull(planItems.courseLessonId),
+        ),
+      ),
     db
       .select({ at: courseLessons.completedAt })
       .from(courseLessons)

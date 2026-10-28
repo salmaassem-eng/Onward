@@ -74,9 +74,12 @@ export default function Modal({
 
   if (!open) return null;
 
+  // inside the app root, so the dark theme variables apply to the modal too
+  const target = document.querySelector("[data-app]") ?? document.body;
+
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -92,6 +95,6 @@ export default function Modal({
         {children}
       </div>
     </div>,
-    document.body
+    target
   );
 }

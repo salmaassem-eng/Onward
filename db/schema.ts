@@ -10,7 +10,7 @@ import { CATEGORIES } from "@/lib/goals";
 import { relations } from "drizzle-orm";
 import { PROJECT_STATUSES } from "../lib/projects";
 import { COURSE_PROVIDERS } from "../lib/learning";
-
+import { REMINDER_CONTENTS, THEMES } from "../lib/settings";
 
 //login
 export const users = pgTable("users", {
@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -177,6 +178,9 @@ export const planItems = pgTable("plan_items", {
   goalSubstepId: integer("goal_substep_id").references(() => goalSubsteps.id, { onDelete: "cascade" }),
   projectMilestoneId: integer("project_milestone_id").references(() => projectMilestones.id, { onDelete: "cascade" }),
   projectTaskId: integer("project_task_id").references(() => projectTasks.id, { onDelete: "cascade" }),
+  courseLessonId: integer("course_lesson_id").references(() => courseLessons.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -185,6 +189,7 @@ export const planItemsRelations = relations(planItems, ({ one }) => ({
   goalSubstep: one(goalSubsteps, { fields: [planItems.goalSubstepId], references: [goalSubsteps.id] }),
   projectMilestone: one(projectMilestones, { fields: [planItems.projectMilestoneId], references: [projectMilestones.id] }),
   projectTask: one(projectTasks, { fields: [planItems.projectTaskId], references: [projectTasks.id] }),
+  courseLesson: one(courseLessons, { fields: [planItems.courseLessonId], references: [courseLessons.id] }),
 }));
 
 
@@ -240,3 +245,30 @@ export const courseLessonsRelations = relations(courseLessons, ({ one }) => ({
     references: [courseModules.id],
   }),
 }));
+
+//settings and image
+
+export const userAvatars = pgTable("user_avatars", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  data: text("data").notNull(), // base64
+  contentType: text("content_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userSettings = pgTable("user_settings", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  theme: text("theme", { enum: THEMES }).notNull().default("light"),
+  dailyReminder: boolean("daily_reminder").notNull().default(false),
+  reminderContent: text("reminder_content", { enum: REMINDER_CONTENTS })
+    .notNull()
+    .default("both"),
+  reminderHour: integer("reminder_hour").notNull().default(8),
+  weeklyDigest: boolean("weekly_digest").notNull().default(false),
+  timezone: text("timezone").notNull().default("UTC"),
+  lastDailySentOn: text("last_daily_sent_on"),
+  lastWeeklySentOn: text("last_weekly_sent_on"),
+});

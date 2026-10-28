@@ -1,19 +1,19 @@
 import AppSidebar from "@/components/app/AppSidebar";
 import MobileNav from "@/components/app/MobileNav";
+import ThemeSync from "@/components/app/ThemeSync";
 import TimezoneSync from "@/components/app/TimezoneSync";
 import { requireUser } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings-queries";
 import { getTimezone } from "@/lib/timezone";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const [timezone, prefs] = await Promise.all([getTimezone(), getUserSettings(user.id)]);
 
   return (
-    <div className="min-h-screen bg-[#f8f8f4] lg:flex">
-      <TimezoneSync current={await getTimezone()} />
+    <div data-app className="min-h-screen bg-cream text-stone-900 lg:flex">
+      <TimezoneSync current={timezone} />
+      <ThemeSync theme={prefs.theme} />
       <AppSidebar user={user} />
       <div className="min-w-0 flex-1">
         <MobileNav />

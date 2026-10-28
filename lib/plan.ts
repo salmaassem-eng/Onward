@@ -1,5 +1,6 @@
 import { addDays, isValidDate } from "./dates";
 import { CATEGORIES, type Category, type GoalView } from "./goals";
+import type { CourseView } from "./learning";
 import type { ProjectView } from "./projects";
 
 export const REF_KINDS = [
@@ -7,6 +8,7 @@ export const REF_KINDS = [
   "goal_substep",
   "project_milestone",
   "project_task",
+  "course_lesson",
 ] as const;
 export type RefKind = (typeof REF_KINDS)[number];
 
@@ -15,8 +17,9 @@ export type PlanItemView = {
   date: string;
   title: string;
   completed: boolean;
-  tag: string; // a goal category, or "Project"
-  source: string | null; // "Goal · Step", "Project · Milestone"
+  tag: string; // a goal category, "Project" or "Learning"
+  source: string | null;
+  href: string | null; // opens a lesson
 };
 
 export type PlanCandidate = {
@@ -59,11 +62,12 @@ export function validateCustomTask(
   return errors;
 }
 
-// what you can pick from when planning:
-// the current step of each goal, and every open milestone/task of active projects
+const LESSONS_PER_COURSE = 5;
+
 export function buildCandidates(
   goals: GoalView[],
-  projects: ProjectView[]
+  projects: ProjectView[],
+  courses: CourseView[]
 ): PlanCandidate[] {
   const out: PlanCandidate[] = [];
 
@@ -123,6 +127,29 @@ export function buildCandidates(
           tag: "Project",
         });
       }
+    }
+  }
+
+  // the next few open lessons of every unfinished course
+  for (const course of courses) {
+    if (course.isComplete) continue;
+    let added = 0;
+
+    for (const m of course.modules) {
+      if (m.status === "done") continue;
+      for (const lesson of m.lessons) {
+        if (lesson.completed) continue;
+        out.push({
+          key: `course_lesson:${lesson.id}`,
+          kind: "course_lesson",
+          id: lesson.id,
+          title: lesson.title,
+          source: `${course.title} · ${m.title}`,
+          tag: "Learning",
+        });
+        if (++added >= LESSONS_PER_COURSE) break;
+      }
+      if (added >= LESSONS_PER_COURSE) break;
     }
   }
 
