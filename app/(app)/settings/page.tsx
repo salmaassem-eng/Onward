@@ -1,24 +1,41 @@
-import { Settings } from "lucide-react";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { getActivitySummary } from "@/lib/activity-queries";
 import { requireUser } from "@/lib/session";
+import { getUserSettings } from "@/lib/settings-queries";
 import PageHeader from "@/components/app/PageHeader";
-import EmptyState from "@/components/app/EmptyState";
+import ProfileCard from "@/components/settings/ProfileCard";
+import JourneyStats from "@/components/settings/JourneyStats";
+import AppearanceCard from "@/components/settings/AppearanceCard";
+import DangerZone from "@/components/settings/DangerZone";
 
 export default async function SettingsPage() {
-  await requireUser();
+  const user = await requireUser();
+
+  const [prefs, activity, [account]] = await Promise.all([
+    getUserSettings(user.id),
+    getActivitySummary(user.id),
+    db
+      .select({ createdAt: users.createdAt })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1),
+  ]);
+
+  const memberSince = (account?.createdAt ?? new Date()).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
-    <>
-      <PageHeader
-        title="Settings"
-        subtitle="Manage your account, preferences and integrations."
-      />
-      <div className="mt-10">
-        <EmptyState
-          icon={Settings}
-          title="No settings yet"
-          text="Settings will show up here."
-        />
-      </div>
-    </>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <PageHeader title="Settings" subtitle="Manage your account and preferences." />
+
+      <ProfileCard name={user.name} email={user.email} avatarVersion={user.avatarVersion} />
+      <JourneyStats memberSince={memberSince} streak={activity.streak} total={activity.total} />
+      <AppearanceCard initial={prefs.theme} />
+      <DangerZone />
+    </div>
   );
 }

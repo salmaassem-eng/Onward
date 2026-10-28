@@ -1,10 +1,16 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { goals, goalSteps, goalSubsteps } from "@/db/schema";
 import { requireUser } from "@/lib/session";
+
+function refresh() {
+  revalidatePath("/journey");
+  revalidatePath("/week");
+  revalidatePath("/dashboard");
+}
 
 export async function setItemCompleted(
   kind: "step" | "substep",
@@ -52,7 +58,70 @@ export async function setItemCompleted(
       .where(eq(goalSubsteps.id, id));
   }
 
-  revalidatePath("/journey");
-  revalidatePath("/week");
-  revalidatePath("/dashboard");
+  refresh();
+}
+
+// swap the positions of two steps (or two sub-steps) of the same parent
+export async function swapOrder(
+  kind: "step" | "substep",
+  id: number,
+  otherId: number
+) {
+  const user = await requireUser();
+
+  if (
+    (kind !== "step" && kind !== "substep") ||
+    !Number.isInteger(id) ||
+    !Number.isInteger(otherId) ||
+    id === otherId
+  ) {
+    throw new Error("Invalid request");
+  }
+
+  if (kind === "step") {
+    const rows = await db
+      .select({
+        id: goalSteps.id,
+        parent: goalSteps.goalId,
+        position: goalSteps.position,
+      })
+      .from(goalSteps)
+      .innerJoin(goals, eq(goals.id, goalSteps.goalId))
+      .where(
+        and(inArray(goalSteps.id, [id, otherId]), eq(goals.userId, user.id))
+      );
+
+    const a = rows.find((r) => r.id === id);
+    const b = rows.find((r) => r.id === otherId);
+    if (!a || !b || a.parent !== b.parent) throw new Error("Not found");
+
+    await Promise.all([
+      db.update(goalSteps).set({ position: b.position }).where(eq(goalSteps.id, a.id)),
+      db.update(goalSteps).set({ position: a.position }).where(eq(goalSteps.id, b.id)),
+    ]);
+  } else {
+    const rows = await db
+      .select({
+        id: goalSubsteps.id,
+        parent: goalSubsteps.stepId,
+        position: goalSubsteps.position,
+      })
+      .from(goalSubsteps)
+      .innerJoin(goalSteps, eq(goalSteps.id, goalSubsteps.stepId))
+      .innerJoin(goals, eq(goals.id, goalSteps.goalId))
+      .where(
+        and(inArray(goalSubsteps.id, [id, otherId]), eq(goals.userId, user.id))
+      );
+
+    const a = rows.find((r) => r.id === id);
+    const b = rows.find((r) => r.id === otherId);
+    if (!a || !b || a.parent !== b.parent) throw new Error("Not found");
+
+    await Promise.all([
+      db.update(goalSubsteps).set({ position: b.position }).where(eq(goalSubsteps.id, a.id)),
+      db.update(goalSubsteps).set({ position: a.position }).where(eq(goalSubsteps.id, b.id)),
+    ]);
+  }
+
+  refresh();
 }

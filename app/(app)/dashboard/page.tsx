@@ -14,14 +14,16 @@ import ContinueCard from "@/components/app/ContinueCard";
 import EmptyState from "@/components/app/EmptyState";
 import GoalSummary from "@/components/app/Goals/GoalSummary";
 import TodayCard from "@/components/plan/TodayCard";
+import { getUserCourses } from "@/lib/course-queries";
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const today = await getToday();
 
-  const [goals, projects, todayItems, activity] = await Promise.all([
+  const [goals, projects, courses, todayItems, activity] = await Promise.all([
     getUserGoals(user.id),
     getUserProjects(user.id),
+    getUserCourses(user.id),
     getPlanItems(user.id, today, today),
     getActivitySummary(user.id),
   ]);
@@ -36,14 +38,14 @@ export default async function DashboardPage() {
     goals.length === 0
       ? "Welcome to Onward. Set your first goal and your journey begins."
       : activity.doneToday
-      ? "You moved forward today. That's what counts."
-      : "One small step today keeps your streak alive.";
+        ? "You moved forward today. That's what counts."
+        : "One small step today keeps your streak alive.";
 
   const streakHint = activity.doneToday
     ? "Keep it going →"
     : activity.streak > 0
-    ? "Do one thing today to keep it"
-    : "Finish one step to start";
+      ? "Do one thing today to keep it"
+      : "Finish one step to start";
 
   return (
     <div className="space-y-8">
@@ -106,7 +108,7 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <TodayCard items={todayItems} today={today} candidates={buildCandidates(goals, projects)} />
+        <TodayCard items={todayItems} today={today} candidates={buildCandidates(goals, projects, courses)} />
       </div>
     </div>
   );

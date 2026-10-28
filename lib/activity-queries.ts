@@ -1,6 +1,9 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  courseLessons,
+  courseModules,
+  courses,
   goals,
   goalSteps,
   goalSubsteps,
@@ -14,8 +17,7 @@ import { dayFormatter, getTimezone } from "./timezone";
 
 export async function getActivitySummary(userId: number) {
   const dayOf = dayFormatter(await getTimezone());
-
-  const [steps, subs, milestones, tasks, custom] = await Promise.all([
+  const [steps, subs, milestones, tasks, custom, lessons] = await Promise.all([
     db
       .select({ at: goalSteps.completedAt })
       .from(goalSteps)
@@ -49,13 +51,20 @@ export async function getActivitySummary(userId: number) {
           isNull(planItems.goalStepId),
           isNull(planItems.goalSubstepId),
           isNull(planItems.projectMilestoneId),
-          isNull(planItems.projectTaskId)
-        )
+          isNull(planItems.projectTaskId),
+          isNull(planItems.courseLessonId),
+        ),
       ),
+    db
+      .select({ at: courseLessons.completedAt })
+      .from(courseLessons)
+      .innerJoin(courseModules, eq(courseModules.id, courseLessons.moduleId))
+      .innerJoin(courses, eq(courses.id, courseModules.courseId))
+      .where(and(eq(courses.userId, userId), isNotNull(courseLessons.completedAt))),
   ]);
 
   const counts = new Map<string, number>();
-  for (const row of [...steps, ...subs, ...milestones, ...tasks, ...custom]) {
+  for (const row of [...steps, ...subs, ...milestones, ...tasks, ...custom, ...lessons]) {
     if (!row.at) continue;
     const day = dayOf(row.at);
     counts.set(day, (counts.get(day) ?? 0) + 1);

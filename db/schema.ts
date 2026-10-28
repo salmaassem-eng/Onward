@@ -9,7 +9,8 @@ import {
 import { CATEGORIES } from "@/lib/goals";
 import { relations } from "drizzle-orm";
 import { PROJECT_STATUSES } from "../lib/projects";
-
+import { COURSE_PROVIDERS } from "../lib/learning";
+import { THEMES } from "../lib/settings";
 
 //login
 export const users = pgTable("users", {
@@ -17,6 +18,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -91,6 +93,7 @@ export const goalSubstepsRelations = relations(goalSubsteps, ({ one }) => ({
 export const goalsRelations = relations(goals, ({ many }) => ({
   steps: many(goalSteps),
   projects: many(projects),
+  courses: many(courses),
 }));
 
 //projects data 
@@ -175,6 +178,9 @@ export const planItems = pgTable("plan_items", {
   goalSubstepId: integer("goal_substep_id").references(() => goalSubsteps.id, { onDelete: "cascade" }),
   projectMilestoneId: integer("project_milestone_id").references(() => projectMilestones.id, { onDelete: "cascade" }),
   projectTaskId: integer("project_task_id").references(() => projectTasks.id, { onDelete: "cascade" }),
+  courseLessonId: integer("course_lesson_id").references(() => courseLessons.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -183,4 +189,77 @@ export const planItemsRelations = relations(planItems, ({ one }) => ({
   goalSubstep: one(goalSubsteps, { fields: [planItems.goalSubstepId], references: [goalSubsteps.id] }),
   projectMilestone: one(projectMilestones, { fields: [planItems.projectMilestoneId], references: [projectMilestones.id] }),
   projectTask: one(projectTasks, { fields: [planItems.projectTaskId], references: [projectTasks.id] }),
+  courseLesson: one(courseLessons, { fields: [planItems.courseLessonId], references: [courseLessons.id] }),
 }));
+
+
+//learning page 
+export const courses = pgTable("courses", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  goalId: integer("goal_id").references(() => goals.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  url: text("url"),
+  provider: text("provider", { enum: COURSE_PROVIDERS }),
+  thumbnailUrl: text("thumbnail_url"),
+  lastOpenedAt: timestamp("last_opened_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const courseModules = pgTable("course_modules", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  courseId: integer("course_id")
+    .notNull()
+    .references(() => courses.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  position: integer("position").notNull(),
+});
+
+export const courseLessons = pgTable("course_lessons", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  moduleId: integer("module_id")
+    .notNull()
+    .references(() => courseModules.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  url: text("url"),
+  position: integer("position").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const coursesRelations = relations(courses, ({ one, many }) => ({
+  goal: one(goals, { fields: [courses.goalId], references: [goals.id] }),
+  modules: many(courseModules),
+}));
+
+export const courseModulesRelations = relations(courseModules, ({ one, many }) => ({
+  course: one(courses, { fields: [courseModules.courseId], references: [courses.id] }),
+  lessons: many(courseLessons),
+}));
+
+export const courseLessonsRelations = relations(courseLessons, ({ one }) => ({
+  module: one(courseModules, {
+    fields: [courseLessons.moduleId],
+    references: [courseModules.id],
+  }),
+}));
+
+//settings and image
+
+export const userAvatars = pgTable("user_avatars", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  data: text("data").notNull(), // base64
+  contentType: text("content_type").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userSettings = pgTable("user_settings", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  theme: text("theme", { enum: THEMES }).notNull().default("light"),
+});

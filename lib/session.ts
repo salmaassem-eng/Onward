@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, ne, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 
@@ -14,6 +14,8 @@ export type SessionUser = {
   id: number;
   name: string;
   email: string;
+    avatarVersion: number | null; // changes on every upload, so the browser re-downloads
+
 };
 
 const hashToken = (token: string) =>
@@ -57,6 +59,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
       name: users.name,
       email: users.email,
       expiresAt: sessions.expiresAt,
+      avatarUpdatedAt: users.avatarUpdatedAt,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
@@ -69,7 +72,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     return null;
   }
 
-  return { id: row.id, name: row.name, email: row.email };
+  return { id: row.id, name: row.name, email: row.email, avatarVersion: row.avatarUpdatedAt?.getTime() ?? null, };
 
 });
 
@@ -77,4 +80,15 @@ export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   return user;
+}
+
+//sign out from all devices when change password
+export async function destroyOtherSessions(userId: number) {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) return;
+
+  await db
+    .delete(sessions)
+    .where(and(eq(sessions.userId, userId), ne(sessions.id, hashToken(token))));
 }

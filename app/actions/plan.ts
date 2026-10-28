@@ -4,6 +4,9 @@ import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import {
+  courseLessons,
+  courseModules,
+  courses,
   goals,
   goalSteps,
   goalSubsteps,
@@ -39,6 +42,7 @@ const refColumns = (kind: RefKind, id: number) => ({
   goalSubstepId: kind === "goal_substep" ? id : null,
   projectMilestoneId: kind === "project_milestone" ? id : null,
   projectTaskId: kind === "project_task" ? id : null,
+  courseLessonId: kind === "course_lesson" ? id : null,
 });
 
 type RefRow = {
@@ -46,6 +50,7 @@ type RefRow = {
   goalSubstepId: number | null;
   projectMilestoneId: number | null;
   projectTaskId: number | null;
+  courseLessonId: number | null;
 };
 
 function refKeyOf(row: RefRow) {
@@ -53,6 +58,7 @@ function refKeyOf(row: RefRow) {
   if (row.goalSubstepId) return `goal_substep:${row.goalSubstepId}`;
   if (row.projectMilestoneId) return `project_milestone:${row.projectMilestoneId}`;
   if (row.projectTaskId) return `project_task:${row.projectTaskId}`;
+  if (row.courseLessonId) return `course_lesson:${row.courseLessonId}`;
   return null;
 }
 
@@ -80,13 +86,20 @@ async function ownedIds(userId: number, kind: RefKind, ids: number[]) {
       .from(projectMilestones)
       .innerJoin(projects, eq(projects.id, projectMilestones.projectId))
       .where(and(inArray(projectMilestones.id, ids), eq(projects.userId, userId)));
-  } else {
+  } else if (kind === "project_task") {
     rows = await db
       .select({ id: projectTasks.id })
       .from(projectTasks)
       .innerJoin(projectMilestones, eq(projectMilestones.id, projectTasks.milestoneId))
       .innerJoin(projects, eq(projects.id, projectMilestones.projectId))
       .where(and(inArray(projectTasks.id, ids), eq(projects.userId, userId)));
+  } else {
+    rows = await db
+      .select({ id: courseLessons.id })
+      .from(courseLessons)
+      .innerJoin(courseModules, eq(courseModules.id, courseLessons.moduleId))
+      .innerJoin(courses, eq(courses.id, courseModules.courseId))
+      .where(and(inArray(courseLessons.id, ids), eq(courses.userId, userId)));
   }
   return rows.map((r) => r.id);
 }
@@ -120,6 +133,7 @@ export async function addLinkedPlanItems(
       goalSubstepId: planItems.goalSubstepId,
       projectMilestoneId: planItems.projectMilestoneId,
       projectTaskId: planItems.projectTaskId,
+      courseLessonId: planItems.courseLessonId,
     })
     .from(planItems)
     .where(and(eq(planItems.userId, user.id), eq(planItems.date, date)));
@@ -183,7 +197,7 @@ export async function togglePlanItem(id: number, completed: boolean) {
 
   const patch = { completed, completedAt: completed ? new Date() : null };
 
-  // linked tasks update the real step / task, so progress moves everywhere
+  // linked tasks update the real item, so progress moves everywhere
   if (item.goalSubstepId) {
     await db.update(goalSubsteps).set(patch).where(eq(goalSubsteps.id, item.goalSubstepId));
   } else if (item.goalStepId) {
@@ -191,7 +205,27 @@ export async function togglePlanItem(id: number, completed: boolean) {
   } else if (item.projectTaskId) {
     await db.update(projectTasks).set(patch).where(eq(projectTasks.id, item.projectTaskId));
   } else if (item.projectMilestoneId) {
-    await db.update(projectMilestones).set(patch).where(eq(projectMilestones.id, item.projectMilestoneId));
+    await db
+      .update(projectMilestones)
+      .set(patch)
+      .where(eq(projectMilestones.id, item.projectMilestoneId));
+  } else if (item.courseLessonId) {
+    await db.update(courseLessons).set(patch).where(eq(courseLessons.id, item.courseLessonId));
+
+    if (completed) {
+      const [row] = await db
+        .select({ courseId: courseModules.courseId })
+        .from(courseLessons)
+        .innerJoin(courseModules, eq(courseModules.id, courseLessons.moduleId))
+        .where(eq(courseLessons.id, item.courseLessonId))
+        .limit(1);
+      if (row) {
+        await db
+          .update(courses)
+          .set({ lastOpenedAt: new Date() })
+          .where(eq(courses.id, row.courseId));
+      }
+    }
   } else {
     await db.update(planItems).set(patch).where(eq(planItems.id, id));
   }
@@ -199,6 +233,7 @@ export async function togglePlanItem(id: number, completed: boolean) {
   refresh();
   revalidatePath("/journey");
   revalidatePath("/projects");
+  revalidatePath("/learning");
 }
 
 export async function movePlanItem(id: number, date: string): Promise<PlanResult> {

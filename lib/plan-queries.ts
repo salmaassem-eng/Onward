@@ -18,15 +18,16 @@ export async function getPlanItems(
       goalStep: { with: { goal: { columns: { title: true, category: true } } } },
       goalSubstep: {
         with: {
-          step: {
-            with: { goal: { columns: { title: true, category: true } } },
-          },
+          step: { with: { goal: { columns: { title: true, category: true } } } },
         },
       },
       projectMilestone: { with: { project: { columns: { title: true } } } },
       projectTask: {
+        with: { milestone: { with: { project: { columns: { title: true } } } } },
+      },
+      courseLesson: {
         with: {
-          milestone: { with: { project: { columns: { title: true } } } },
+          module: { with: { course: { columns: { title: true, url: true } } } },
         },
       },
     },
@@ -34,8 +35,19 @@ export async function getPlanItems(
   });
 
   return rows.map((row): PlanItemView => {
-    const base = { id: row.id, date: row.date };
+    const base = { id: row.id, date: row.date, href: null as string | null };
 
+    if (row.courseLesson) {
+      const { module } = row.courseLesson;
+      return {
+        ...base,
+        title: row.courseLesson.title,
+        completed: row.courseLesson.completed,
+        tag: "Learning",
+        source: `${module.course.title} · ${module.title}`,
+        href: row.courseLesson.url ?? module.course.url,
+      };
+    }
     if (row.goalSubstep) {
       const { step } = row.goalSubstep;
       return {

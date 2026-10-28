@@ -6,6 +6,7 @@ import { getUserProjects } from "@/lib/project-queries";
 import { requireUser } from "@/lib/session";
 import { getToday } from "@/lib/timezone";
 import WeekBoard from "@/components/plan/WeekBoard";
+import { getUserCourses } from "@/lib/course-queries";
 
 export default async function WeekPage({
   searchParams,
@@ -20,10 +21,11 @@ export default async function WeekPage({
   const currentStart = startOfWeek(today);
   const days = weekDates(start);
 
-  const [items, goals, projects] = await Promise.all([
+  const [items, goals, projects, courses] = await Promise.all([
     getPlanItems(user.id, days[0], days[6]),
     getUserGoals(user.id),
     getUserProjects(user.id),
+    getUserCourses(user.id),
   ]);
 
   const offset = Math.round((Date.parse(start) - Date.parse(currentStart)) / (7 * 86_400_000));
@@ -42,7 +44,7 @@ export default async function WeekPage({
       days={days}
       items={items}
       today={today}
-      candidates={buildCandidates(goals, projects)}
+      candidates={buildCandidates(goals, projects, courses)}
     />
   );
 }

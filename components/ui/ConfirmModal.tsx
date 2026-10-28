@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, type LucideIcon } from "lucide-react";
 import Modal from "./Modal";
 
 type ConfirmModalProps = {
@@ -8,9 +8,23 @@ type ConfirmModalProps = {
   title: string;
   text: string;
   confirmLabel?: string;
+  loadingLabel?: string;
+  tone?: "danger" | "neutral";
+  icon?: LucideIcon;
   loading?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+};
+
+const tones = {
+  danger: {
+    icon: "bg-red-50 text-red-600",
+    button: "bg-red-600 hover:bg-red-700",
+  },
+  neutral: {
+    icon: "bg-green-50 text-green-700",
+    button: "bg-green-600 hover:bg-green-700",
+  },
 };
 
 export default function ConfirmModal({
@@ -18,10 +32,15 @@ export default function ConfirmModal({
   title,
   text,
   confirmLabel = "Delete",
+  loadingLabel = "Deleting...",
+  tone = "danger",
+  icon: Icon = Trash2,
   loading = false,
   onConfirm,
   onClose,
 }: ConfirmModalProps) {
+  const t = tones[tone];
+
   return (
     <Modal
       open={open}
@@ -30,10 +49,13 @@ export default function ConfirmModal({
       width="max-w-sm"
     >
       <div className="p-6">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-600">
-          <Trash2 className="h-5 w-5" />
+        <span className={`flex h-11 w-11 items-center justify-center rounded-full ${t.icon}`}>
+          <Icon className="h-5 w-5" />
         </span>
-        <h2 id="confirm-title" className="font-heading mt-4 text-lg font-semibold text-stone-900">
+        <h2
+          id="confirm-title"
+          className="font-heading mt-4 text-lg font-semibold text-stone-900"
+        >
           {title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-stone-500">{text}</p>
@@ -51,9 +73,9 @@ export default function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+            className={`flex-1 rounded-xl py-3 text-sm font-semibold text-white transition disabled:opacity-60 ${t.button}`}
           >
-            {loading ? "Deleting..." : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>
