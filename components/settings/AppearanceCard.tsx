@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { toast } from "react-toastify";
-import { updatePreferences } from "@/app/actions/settings";
+import { updateTheme } from "@/app/actions/settings";
 import type { Theme } from "@/lib/settings";
 import { applyTheme } from "@/components/app/ThemeSync";
 
@@ -24,7 +24,7 @@ export default function AppearanceCard({ initial }: { initial: Theme }) {
     applyTheme(next); // instant, no waiting for the server
 
     try {
-      const result = await updatePreferences({ theme: next });
+      const result = await updateTheme(next);
       if (!result.ok) throw new Error();
       toast.success(`${options.find((o) => o.value === next)?.label} theme on.`);
     } catch {

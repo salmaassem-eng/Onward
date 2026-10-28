@@ -3,7 +3,6 @@
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { createSession, destroySession } from "@/lib/session";
@@ -89,5 +88,4 @@ export async function login(values: LoginValues): Promise<AuthResult> {
 
 export async function logout() {
   await destroySession();
-  redirect("/login");
 }

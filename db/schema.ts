@@ -10,7 +10,7 @@ import { CATEGORIES } from "@/lib/goals";
 import { relations } from "drizzle-orm";
 import { PROJECT_STATUSES } from "../lib/projects";
 import { COURSE_PROVIDERS } from "../lib/learning";
-import { REMINDER_CONTENTS, THEMES } from "../lib/settings";
+import { THEMES } from "../lib/settings";
 
 //login
 export const users = pgTable("users", {
@@ -262,13 +262,4 @@ export const userSettings = pgTable("user_settings", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   theme: text("theme", { enum: THEMES }).notNull().default("light"),
-  dailyReminder: boolean("daily_reminder").notNull().default(false),
-  reminderContent: text("reminder_content", { enum: REMINDER_CONTENTS })
-    .notNull()
-    .default("both"),
-  reminderHour: integer("reminder_hour").notNull().default(8),
-  weeklyDigest: boolean("weekly_digest").notNull().default(false),
-  timezone: text("timezone").notNull().default("UTC"),
-  lastDailySentOn: text("last_daily_sent_on"),
-  lastWeeklySentOn: text("last_weekly_sent_on"),
 });

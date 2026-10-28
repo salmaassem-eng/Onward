@@ -10,6 +10,7 @@ import { validateName } from "@/lib/settings";
 import Avatar from "@/components/app/Avatar";
 import Button from "@/components/Button";
 import FormField from "@/components/FormField";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 type ProfileCardProps = {
   name: string;
@@ -61,6 +62,7 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -144,15 +146,15 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
   }
 
   return (
-    <section className="rounded-3xl border border-stone-200 bg-white p-6 sm:p-8">
+    <section className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-8">
       <h2 className="font-heading text-lg font-semibold text-stone-900">Profile</h2>
       <p className="mt-1 text-sm text-stone-400">Your personal information</p>
 
-      <div className="mt-6 flex items-center gap-5 border-b border-stone-100 pb-6">
+      <div className="mt-6 flex items-center gap-4 border-b border-stone-100 pb-6 sm:gap-5">
         <Avatar
           name={name}
           version={avatarVersion}
-          className="h-20 w-20 rounded-3xl text-3xl"
+          className="h-16 w-16 rounded-2xl text-2xl sm:h-20 sm:w-20 sm:rounded-3xl sm:text-3xl"
         />
         <div className="min-w-0">
           <p className="font-heading truncate text-lg font-semibold text-stone-900">{name}</p>
@@ -214,6 +216,22 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
           </p>
         </div>
 
+        <div>
+          <p className="mb-2 text-sm font-medium text-stone-700">Password</p>
+          <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-5 py-3">
+            <span className="min-w-0 flex-1 tracking-widest text-stone-500" aria-hidden>
+              ••••••••••
+            </span>
+            <button
+              type="button"
+              onClick={() => setChangingPassword(true)}
+              className="shrink-0 text-sm font-semibold text-green-600 hover:underline"
+            >
+              Change password
+            </button>
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <div className="w-full sm:w-48">
             <Button type="submit" loading={saving}>
@@ -222,6 +240,11 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
           </div>
         </div>
       </form>
+
+      <ChangePasswordModal
+        open={changingPassword}
+        onClose={() => setChangingPassword(false)}
+      />
     </section>
   );
 }

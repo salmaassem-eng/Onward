@@ -7,9 +7,7 @@ import { getUserSettings } from "@/lib/settings-queries";
 import PageHeader from "@/components/app/PageHeader";
 import ProfileCard from "@/components/settings/ProfileCard";
 import JourneyStats from "@/components/settings/JourneyStats";
-import NotificationsCard from "@/components/settings/NotificationsCard";
 import AppearanceCard from "@/components/settings/AppearanceCard";
-import SecurityCard from "@/components/settings/SecurityCard";
 import DangerZone from "@/components/settings/DangerZone";
 
 export default async function SettingsPage() {
@@ -36,17 +34,7 @@ export default async function SettingsPage() {
 
       <ProfileCard name={user.name} email={user.email} avatarVersion={user.avatarVersion} />
       <JourneyStats memberSince={memberSince} streak={activity.streak} total={activity.total} />
-      <NotificationsCard
-        email={user.email}
-        initial={{
-          dailyReminder: prefs.dailyReminder,
-          reminderContent: prefs.reminderContent,
-          reminderHour: prefs.reminderHour,
-          weeklyDigest: prefs.weeklyDigest,
-        }}
-      />
       <AppearanceCard initial={prefs.theme} />
-      <SecurityCard />
       <DangerZone />
     </div>
   );

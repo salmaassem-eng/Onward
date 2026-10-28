@@ -15,9 +15,8 @@ import {
 import { summarizeActivity } from "./activity";
 import { dayFormatter, getTimezone } from "./timezone";
 
-export async function getActivitySummary(userId: number, timeZone?: string) {
-  const dayOf = dayFormatter(timeZone ?? (await getTimezone()));
-
+export async function getActivitySummary(userId: number) {
+  const dayOf = dayFormatter(await getTimezone());
   const [steps, subs, milestones, tasks, custom, lessons] = await Promise.all([
     db
       .select({ at: goalSteps.completedAt })

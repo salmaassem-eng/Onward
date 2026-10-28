@@ -6,15 +6,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { userAvatars, userSettings, users } from "@/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
-import { sendReminderNow } from "@/lib/reminders";
 import { destroyOtherSessions, destroySession, requireUser } from "@/lib/session";
-import {
-  sanitizePreferences,
-  validateName,
-  validateNewPassword,
-  type Preferences,
-} from "@/lib/settings";
-import { getTimezone } from "@/lib/timezone";
+import { isTheme, validateName, validateNewPassword } from "@/lib/settings";
 
 export type SettingsResult =
   | { ok: true }
@@ -72,9 +65,7 @@ export async function uploadAvatar(formData: FormData): Promise<SettingsResult> 
 
   const buf = Buffer.from(await file.arrayBuffer());
   const contentType = sniffImage(buf);
-  if (!contentType) {
-    return { ok: false, message: "Use a JPG, PNG or WebP image." };
-  }
+  if (!contentType) return { ok: false, message: "Use a JPG, PNG or WebP image." };
 
   const now = new Date();
   const data = buf.toString("base64");
@@ -102,43 +93,17 @@ export async function removeAvatar(): Promise<SettingsResult> {
   return { ok: true };
 }
 
-export async function updatePreferences(
-  patch: Partial<Preferences>
-): Promise<SettingsResult> {
+export async function updateTheme(theme: string): Promise<SettingsResult> {
   const user = await requireUser();
-
-  const clean = sanitizePreferences(patch);
-  if (!clean) return { ok: false, message: "Invalid settings." };
-
-  // the cron job needs to know the user's time zone, so it is saved with the preferences
-  const timezone = await getTimezone();
+  if (!isTheme(theme)) return { ok: false, message: "Invalid theme." };
 
   await db
     .insert(userSettings)
-    .values({ userId: user.id, ...clean, timezone })
-    .onConflictDoUpdate({
-      target: userSettings.userId,
-      set: { ...clean, timezone },
-    });
+    .values({ userId: user.id, theme })
+    .onConflictDoUpdate({ target: userSettings.userId, set: { theme } });
 
   refreshAll();
   return { ok: true };
-}
-
-export async function sendTestEmail(): Promise<SettingsResult> {
-  const user = await requireUser();
-
-  if (!(await rateLimit(`test-email:${user.id}`, 3, HOUR))) {
-    return { ok: false, message: "Too many test emails. Try again later." };
-  }
-
-  try {
-    await sendReminderNow(user.id, await getTimezone());
-    return { ok: true };
-  } catch (e) {
-    console.error("Test email failed:", e instanceof Error ? e.message : "unknown error");
-    return { ok: false, message: "Couldn't send the email. Check your email settings." };
-  }
 }
 
 export async function changePassword(
