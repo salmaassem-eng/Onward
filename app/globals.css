@@ -84,6 +84,10 @@ body {
   }
 }
 
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
 
 @theme {
   --color-cream: #f8f8f4;

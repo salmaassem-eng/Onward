@@ -308,7 +308,7 @@ export default function ProjectForm({
           )}
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <FormField
             label="Deadline (optional)"
             id="project-deadline"

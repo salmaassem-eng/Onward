@@ -7,7 +7,7 @@ import ButtonLink from "@/components/starterPage/Button";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-[#1c1917] p-8 sm:p-10">
+    <section className="relative overflow-hidden rounded-3xl bg-[#1c1917] p-5 sm:p-10">
       <div className="pointer-events-none absolute -right-10 -top-10 h-80 w-80 bg-[radial-gradient(circle,rgba(34,197,94,0.15),transparent_70%)]" />
       <div className="relative">{children}</div>
     </section>
@@ -28,12 +28,12 @@ export default function ContinueCard({ goals }: { goals: GoalView[] }) {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-green-400">Start here</p>
-            <h2 className="font-heading mt-3 text-3xl font-bold text-white">Nothing to continue yet</h2>
+            <h2 className="font-heading mt-3 text-2xl font-bold break-words text-white sm:text-3xl">Nothing to continue yet</h2>
             <p className="mt-2 max-w-md text-stone-400">
               Add a goal and it will show up here, so you can jump back in any time.
             </p>
           </div>
-          <ButtonLink href="/goals/new" size="lg">Set your first goal →</ButtonLink>
+          <ButtonLink  href="/goals/new" size="lg" >Set your first goal →</ButtonLink>
         </div>
       </Shell>
     );
@@ -46,7 +46,7 @@ export default function ContinueCard({ goals }: { goals: GoalView[] }) {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-green-400">Keep your progress going</p>
-            <h2 className="font-heading mt-3 text-3xl font-bold text-white">Every goal is complete</h2>
+            <h2 className="font-heading mt-3 text-2xl font-bold break-words text-white sm:text-3xl">Every goal is complete</h2>
             <p className="mt-2 max-w-md text-stone-400">
               Look how far you came. Add a new goal and keep your journey moving.
             </p>
@@ -84,7 +84,7 @@ export default function ContinueCard({ goals }: { goals: GoalView[] }) {
                     <p className="text-sm font-semibold uppercase tracking-wide text-green-400">
                       Continue · {goal.category}
                     </p>
-                    <h2 className="font-heading mt-3 text-3xl font-bold text-white">{action.title}</h2>
+                    <h2 className="font-heading mt-3 text-2xl font-bold break-words text-white sm:text-3xl">{action.title}</h2>
                     <p className="mt-2 text-stone-400">
                       {action.kind === "substep" ? `${goal.title} · ${action.parent}` : goal.title}
                     </p>

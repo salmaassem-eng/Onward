@@ -52,7 +52,7 @@ export default function ProjectsBoard({
           No {filter} projects.
         </p>
       ) : (
-        <div className="mt-8 grid gap-5 md:grid-cols-2">          {visible.map((project) => (
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">          {visible.map((project) => (
           <ProjectCard
             key={project.id}
             project={project}

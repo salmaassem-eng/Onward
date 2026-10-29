@@ -4,8 +4,8 @@ import { requireUser } from "@/lib/session";
 import PageHeader from "@/components/app/PageHeader";
 import EmptyState from "@/components/app/EmptyState";
 import ButtonLink from "@/components/starterPage/Button";
-import CourseCard from "@/components/learning/CourseCard";
 import CourseDetail from "@/components/learning/CourseDetail";
+import CourseList from "@/components/learning/CourseList";
 
 export default async function LearningPage({
   searchParams,
@@ -29,15 +29,15 @@ export default async function LearningPage({
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <PageHeader title="Learning" subtitle={subtitle} />
-        <ButtonLink href="/learning/new" size="lg">
+        <ButtonLink href="/learning/new" size="header" className="shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           Add course
         </ButtonLink>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         {!selected ? (
           <EmptyState
             icon={GraduationCap}
@@ -46,13 +46,11 @@ export default async function LearningPage({
             action={{ href: "/learning/new", label: "Add a course" }}
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-            <div className="flex gap-4 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
-              {courses.map((c) => (
-                <CourseCard key={c.id} course={c} selected={c.id === selected.id} />
-              ))}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+            <CourseList courses={courses} selectedId={selected.id} />
+            <div id="course-detail" className="min-w-0 scroll-mt-20 lg:scroll-mt-6">
+              <CourseDetail key={selected.id} course={selected} />
             </div>
-            <CourseDetail key={selected.id} course={selected} />
           </div>
         )}
       </div>

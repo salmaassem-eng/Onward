@@ -72,7 +72,7 @@ export default function GoalHero({ goal }: { goal: GoalView }) {
         />
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-[2fr_3fr]">
+      <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-[2fr_3fr]">
         {/* where you are */}
         <div className="rounded-2xl border border-green-100 bg-green-50 p-5">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-green-700">

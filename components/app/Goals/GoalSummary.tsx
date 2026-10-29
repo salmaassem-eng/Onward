@@ -17,9 +17,7 @@ export default function GoalSummary({ goal }: { goal: GoalView }) {
           >
             {goal.category}
           </span>
-          <p className="font-heading mt-2 font-semibold text-stone-900">
-            {goal.title}
-          </p>
+          <p className="font-heading mt-2 break-words font-semibold text-stone-900">{goal.title}</p>
         </div>
         <span className="font-heading text-2xl font-bold text-stone-900">
           {goal.progress}%

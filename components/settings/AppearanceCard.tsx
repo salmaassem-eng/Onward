@@ -39,7 +39,7 @@ export default function AppearanceCard({ initial }: { initial: Theme }) {
       <h2 className="font-heading text-lg font-semibold text-stone-900">Appearance</h2>
       <p className="mt-1 text-sm text-stone-400">Customize how Onward looks</p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {options.map(({ value, label, icon: Icon }) => {
           const active = theme === value;
           return (

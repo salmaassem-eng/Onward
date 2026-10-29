@@ -16,7 +16,7 @@ export default function JourneyStats({ memberSince, streak, total }: JourneyStat
       <h2 className="font-heading text-lg font-semibold text-stone-900">Your Journey</h2>
       <p className="mt-1 text-sm text-stone-400">A look at how far you&apos;ve come</p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl bg-stone-50 px-4 py-5 text-center">
             <p className="font-heading text-xl font-bold text-stone-900">{s.value}</p>
