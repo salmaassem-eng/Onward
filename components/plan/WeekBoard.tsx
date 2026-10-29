@@ -20,6 +20,29 @@ type WeekBoardProps = {
   candidates: PlanCandidate[];
 };
 
+function Stat({
+  value,
+  label,
+  green = false,
+}: {
+  value: string;
+  label: string;
+  green?: boolean;
+}) {
+  return (
+    <div className="px-2 py-4 text-center sm:px-5 sm:py-5">
+      <p
+        className={`font-heading text-2xl font-bold sm:text-3xl ${
+          green ? "text-green-700" : "text-stone-900"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-stone-500 sm:text-sm">{label}</p>
+    </div>
+  );
+}
+
 export default function WeekBoard({
   title,
   range,
@@ -38,6 +61,7 @@ export default function WeekBoard({
   const total = items.length;
   const done = items.filter((i) => i.completed).length;
   const remaining = total - done;
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
   const activeDays = days.filter((d) => forDay(d).some((i) => i.completed)).length;
   const isPastWeek = days[6] < today;
   const shownDays = selected === "all" ? days : [selected];
@@ -57,7 +81,9 @@ export default function WeekBoard({
       ? "Nothing was planned this week."
       : "Nothing planned yet. Add a task to shape your week.";
   } else if (done === 0) {
-    message = isPastWeek ? "No tasks were finished this week." : "Your week is planned. Pick the first one and start.";
+    message = isPastWeek
+      ? "No tasks were finished this week."
+      : "Your week is planned. Pick the first one and start.";
   } else if (remaining === 0) {
     message = `All ${total} done. Look how far you came.`;
   } else {
@@ -65,23 +91,36 @@ export default function WeekBoard({
   }
 
   const navButton =
-    "flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition hover:bg-stone-50";
+    "flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition hover:bg-stone-50";
+
+  const chip = (active: boolean, isToday = false) =>
+    `shrink-0 rounded-full border text-center transition ${
+      active
+        ? "border-green-600 bg-green-600 text-white"
+        : isToday
+        ? "border-green-300 bg-white text-stone-700 hover:bg-stone-50"
+        : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
+    }`;
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      {/* header: title + add button on one row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold text-stone-900 sm:text-4xl">{title}</h1>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Link href={prevHref} aria-label="Previous week" className={navButton}>
               <ChevronLeft className="h-4 w-4" />
             </Link>
             <Link href={nextHref} aria-label="Next week" className={navButton}>
               <ChevronRight className="h-4 w-4" />
             </Link>
-            <span className="ml-2 text-lg text-stone-500">{range}</span>
+            <span className="ml-1 text-base text-stone-500 sm:text-lg">{range}</span>
             {todayHref && (
-              <Link href={todayHref} className="ml-2 rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-green-700 hover:bg-green-100">
+              <Link
+                href={todayHref}
+                className="rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-green-700 hover:bg-green-100"
+              >
                 This week
               </Link>
             )}
@@ -91,89 +130,84 @@ export default function WeekBoard({
         <button
           type="button"
           onClick={() => setAddDate(defaultAdd)}
-          className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-6 py-3.5 font-semibold text-white shadow-sm transition hover:bg-green-700"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 sm:px-6 sm:py-3.5 sm:text-base"
         >
           <Plus className="h-4 w-4" />
           Add task
         </button>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 text-center">
-          <p className="font-heading text-3xl font-bold text-stone-900">
-            {done}/{total}
-          </p>
-          <p className="mt-1 text-sm text-stone-500">Activities done</p>
-          <div className="mt-3 h-2 rounded-full bg-stone-100">
-            <div
-              className="h-full rounded-full bg-green-500 transition-all"
-              style={{ width: `${total === 0 ? 0 : Math.round((done / total) * 100)}%` }}
-            />
-          </div>
+      {/* one compact summary card */}
+      <div className="mt-6 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <div className="grid grid-cols-3 divide-x divide-stone-200">
+          <Stat value={`${done}/${total}`} label="Done" />
+          <Stat value={`${activeDays}/7`} label="Active days" green />
+          <Stat value={String(remaining)} label="Left" />
         </div>
-        <div className="rounded-2xl border border-green-100 bg-green-50 p-5 text-center">
-          <p className="font-heading text-3xl font-bold text-green-700">
-            {activeDays}
-            <span className="text-xl text-green-600">/7</span>
-          </p>
-          <p className="mt-1 text-sm text-green-700">Days with progress</p>
-        </div>
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 text-center">
-          <p className="font-heading text-3xl font-bold text-stone-900">{remaining}</p>
-          <p className="mt-1 text-sm text-stone-500">Remaining</p>
-          <p className="mt-1 text-xs text-stone-400">{remaining > 0 && !isPastWeek ? "Keep going →" : "\u00A0"}</p>
+        <div
+          role="progressbar"
+          aria-label="Tasks done this week"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          className="h-1.5 bg-stone-100"
+        >
+          <div
+            className="h-full bg-green-500 transition-all"
+            style={{ width: `${percent}%` }}
+          />
         </div>
       </div>
 
-      <p className="mt-6 rounded-2xl border border-green-100 bg-green-50 px-5 py-4 font-medium text-green-700">
+      <p className="mt-4 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 sm:text-base">
         {message}
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filter by day">
-        <button
-          type="button"
-          onClick={() => setSelected("all")}
-          aria-pressed={selected === "all"}
-          className={`rounded-full border px-6 py-2.5 font-semibold transition ${
-            selected === "all"
-              ? "border-green-600 bg-green-600 text-white"
-              : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-          }`}
+      {/* day filter: sticks under the top bar while you scroll */}
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top)+1px)] z-20 -mx-4 mt-4 bg-cream px-4 py-3 sm:-mx-6 sm:px-6 lg:top-0 lg:mx-0 lg:px-0">
+        <div
+          role="group"
+          aria-label="Filter by day"
+          className="flex gap-2 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
         >
-          All days
-        </button>
-        {days.map((date) => {
-          const list = forDay(date);
-          const d = list.filter((i) => i.completed).length;
-          const complete = list.length > 0 && d === list.length;
-          return (
-            <button
-              key={date}
-              type="button"
-              onClick={() => setSelected(date)}
-              aria-pressed={selected === date}
-              className={`rounded-full border px-5 py-1.5 text-center transition ${
-                selected === date
-                  ? "border-green-600 bg-green-600 text-white"
-                  : date === today
-                  ? "border-green-300 bg-white text-stone-700 hover:bg-stone-50"
-                  : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
-              }`}
-            >
-              <span className="block text-sm font-semibold">{weekdayShort(date)}</span>
-              <span
-                className={`block text-xs font-medium ${
-                  selected === date ? "text-green-100" : complete ? "text-green-600" : "text-stone-400"
-                }`}
+          <button
+            type="button"
+            onClick={() => setSelected("all")}
+            aria-pressed={selected === "all"}
+            className={`${chip(selected === "all")} flex items-center px-5 font-semibold`}
+          >
+            All days
+          </button>
+          {days.map((date) => {
+            const list = forDay(date);
+            const d = list.filter((i) => i.completed).length;
+            const complete = list.length > 0 && d === list.length;
+            const active = selected === date;
+
+            return (
+              <button
+                key={date}
+                type="button"
+                onClick={() => setSelected(date)}
+                aria-pressed={active}
+                aria-label={`${weekdayName(date)}, ${list.length === 0 ? "nothing planned" : `${d} of ${list.length} done`}`}
+                className={`${chip(active, date === today)} px-4 py-1.5`}
               >
-                {list.length === 0 ? "–" : `${d}/${list.length}`}
-              </span>
-            </button>
-          );
-        })}
+                <span className="block text-sm font-semibold">{weekdayShort(date)}</span>
+                <span
+                  className={`block text-xs font-medium ${
+                    active ? "text-green-100" : complete ? "text-green-600" : "text-stone-400"
+                  }`}
+                >
+                  {list.length === 0 ? "–" : `${d}/${list.length}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-8 space-y-8">
+      <div className="mt-4 space-y-8">
         {shownDays.map((date) => {
           const list = forDay(date);
           const d = list.filter((i) => i.completed).length;
@@ -181,13 +215,21 @@ export default function WeekBoard({
 
           return (
             <section key={date}>
-              <div className="mb-3 flex flex-wrap items-center gap-3">
-                <h2 className="font-heading text-lg font-semibold text-stone-900">{weekdayName(date)}</h2>
+              <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="font-heading text-lg font-semibold text-stone-900">
+                  {weekdayName(date)}
+                </h2>
                 <span className="text-sm text-stone-400">{shortDate(date)}</span>
                 {date === today && (
-                  <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">Today</span>
+                  <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                    Today
+                  </span>
                 )}
-                {list.length > 0 && <span className="text-sm text-stone-400">{d}/{list.length}</span>}
+                {list.length > 0 && (
+                  <span className="text-sm text-stone-400">
+                    {d}/{list.length}
+                  </span>
+                )}
                 {complete && <span className="text-sm font-semibold text-green-600">✓ Done</span>}
                 {date >= today && (
                   <button

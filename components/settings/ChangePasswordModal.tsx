@@ -29,7 +29,6 @@ export default function ChangePasswordModal({
 function Body({ onClose }: { onClose: () => void }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
-  const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
 
@@ -69,8 +68,6 @@ function Body({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const type = show ? "text" : "password";
-
   return (
     <form onSubmit={submit} noValidate className="overflow-y-auto p-6">
       <div className="flex items-start justify-between gap-4">
@@ -101,7 +98,7 @@ function Body({ onClose }: { onClose: () => void }) {
         <FormField
           label="Current password"
           id="current-password"
-          type={type}
+          type="password"
           autoComplete="current-password"
           autoFocus
           value={current}
@@ -114,7 +111,7 @@ function Body({ onClose }: { onClose: () => void }) {
         <FormField
           label="New password"
           id="new-password"
-          type={type}
+          type="password"
           autoComplete="new-password"
           placeholder="At least 8 characters"
           value={next}
@@ -124,16 +121,6 @@ function Body({ onClose }: { onClose: () => void }) {
           }}
           error={errors.next}
         />
-
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600">
-          <input
-            type="checkbox"
-            checked={show}
-            onChange={(e) => setShow(e.target.checked)}
-            className="h-4 w-4 accent-green-600"
-          />
-          Show passwords
-        </label>
       </div>
 
       <div className="mt-6 flex gap-3">

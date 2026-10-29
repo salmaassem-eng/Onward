@@ -52,40 +52,48 @@ export default function CourseDetail({ course }: { course: CourseView }) {
     });
   }
 
-  const heroButton =
-    "inline-flex items-center gap-2 rounded-lg bg-white/90 px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-white";
+    const heroButton =
+    "inline-flex h-9 items-center justify-center gap-2 rounded-full bg-white/90 px-2.5 text-sm font-semibold text-stone-700 transition hover:bg-white sm:rounded-lg sm:px-3";
 
   return (
     <section className="min-w-0 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
-      <CourseThumb src={course.thumbnailUrl} className="h-48 sm:h-56">
-        <div className="absolute right-4 top-4 flex gap-2">
-          <Link href={`/learning/${course.id}`} className={heroButton}>
+      <CourseThumb
+        src={course.thumbnailUrl}
+        className="h-56 sm:h-64"
+        iconClassName="left-5 top-5 h-8 w-8"
+      >
+        <div className="absolute right-3 top-3 flex gap-2 sm:right-4 sm:top-4">
+          <Link href={`/learning/${course.id}`} aria-label="Edit course" className={heroButton}>
             <Pencil className="h-4 w-4" />
-            Edit
+            <span className="hidden sm:inline">Edit</span>
           </Link>
           <button
             type="button"
             onClick={() => setConfirming(true)}
+            aria-label="Delete course"
             className={`${heroButton} hover:!text-red-600`}
           >
             <Trash2 className="h-4 w-4" />
-            Delete
+            <span className="hidden sm:inline">Delete</span>
           </button>
         </div>
-        <div className="absolute inset-x-6 bottom-5">
+        <div className="absolute inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-5">
           {course.providerLabel && (
             <span className="mb-2 inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur">
               {course.providerLabel}
             </span>
           )}
-          <h2 className="font-heading text-2xl font-bold text-white sm:text-3xl">
+          <h2
+            dir="auto"
+            className="font-heading line-clamp-3 break-words text-xl font-bold text-white sm:text-3xl"
+          >
             {course.title}
           </h2>
-          <p className="mt-1 text-white/80">{course.subtitle}</p>
+          <p className="mt-1 truncate text-white/80">{course.subtitle}</p>
         </div>
       </CourseThumb>
 
-      <div className="space-y-5 p-6 sm:p-8">
+      <div className="space-y-5 p-4 sm:p-8">
         <div>
           <div className="flex items-center gap-4">
             <div className="h-2.5 flex-1 rounded-full bg-stone-100">
@@ -118,7 +126,7 @@ export default function CourseDetail({ course }: { course: CourseView }) {
               </p>
               <p className="mt-1 truncate text-sm text-stone-500">Module: {next.module}</p>
             </div>
-            <div className="flex shrink-0 flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2 [&>*]:flex-1 [&>*]:justify-center sm:[&>*]:flex-none">
               {next.url && (
                 <a
                   href={next.url}

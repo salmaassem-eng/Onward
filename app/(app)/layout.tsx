@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppSidebar user={user} />
       <div className="min-w-0 flex-1">
         <MobileNav user={user} />
-        <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-12">
+        <main className="mx-auto w-full max-w-5xl overflow-x-clip px-4 pb-10 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-12">
           {children}
         </main>
       </div>

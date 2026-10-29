@@ -26,7 +26,7 @@ export default function ConnectedProjects({
           No projects connected yet. Create a project and pick this goal.
         </p>
       ) : (
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {projects.map((p) => (
             <Link
               key={p.id}

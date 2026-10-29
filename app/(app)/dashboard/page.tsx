@@ -51,11 +51,11 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <Greeting name={firstName} />
-        <p className="mt-2 text-lg text-stone-500">{intro}</p>
+        <p className="mt-2 text-base text-stone-500 sm:text-lg">{intro}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="min-w-0 lg:col-span-3">
           <ActivityCard
             days={activity.days}
             activeDays={activity.activeDays}
@@ -81,8 +81,8 @@ export default async function DashboardPage() {
 
       <ContinueCard goals={goals} />
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
-        <section>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <section className="min-w-0">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="font-heading text-lg font-semibold text-stone-900">Your Goals</h2>
             {goals.length > 0 && (

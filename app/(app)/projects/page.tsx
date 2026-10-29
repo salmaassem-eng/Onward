@@ -24,9 +24,9 @@ export default async function ProjectsPage({
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <PageHeader title="Projects" subtitle={subtitle} />
-        <ButtonLink href="/projects/new" size="lg">
+        <ButtonLink href="/projects/new" size="header" className="shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           New project
         </ButtonLink>

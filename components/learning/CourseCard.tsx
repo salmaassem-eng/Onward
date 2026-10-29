@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { CourseView } from "@/lib/learning";
 import CourseThumb from "./CourseThump";
@@ -9,12 +11,22 @@ export default function CourseCard({
   course: CourseView;
   selected: boolean;
 }) {
+  function scrollToDetail() {
+    // on phones the details are below the cards, so go there
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document
+      .getElementById("course-detail")
+      ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+
   return (
     <Link
       href={`/learning?course=${course.id}`}
       scroll={false}
+      onClick={scrollToDetail}
       aria-current={selected ? "true" : undefined}
-      className={`block w-64 shrink-0 overflow-hidden rounded-2xl border bg-white transition lg:w-auto ${
+      className={`block w-64 shrink-0 snap-start overflow-hidden rounded-2xl border bg-white transition lg:w-auto ${
         selected
           ? "border-green-400 ring-2 ring-green-100"
           : "border-stone-200 hover:border-stone-300"
@@ -33,7 +45,10 @@ export default function CourseCard({
       </CourseThumb>
 
       <div className="p-4">
-        <h3 className="font-heading line-clamp-2 font-semibold leading-snug text-stone-900">
+        <h3
+          dir="auto"
+          className="font-heading line-clamp-2 break-words font-semibold leading-snug text-stone-900"
+        >
           {course.title}
         </h3>
         <p className="mt-1 truncate text-sm text-stone-400">{course.subtitle}</p>

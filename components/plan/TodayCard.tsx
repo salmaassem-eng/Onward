@@ -18,7 +18,7 @@ export default function TodayCard({ items, today, candidates }: TodayCardProps) 
   const done = items.filter((i) => i.completed).length;
 
   return (
-    <section>
+    <section className="min-w-0">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-heading text-lg font-semibold text-stone-900">Today</h2>
         <div className="flex items-center gap-3">
