@@ -20,8 +20,6 @@ A calm, visual progress companion. Onward turns your goals, projects and courses
   </p>
   <p align="center">
     <img src="./public/journey.png" alt="Onward journey" width="860" />
-  </p><p align="center">
-    <img src="./public/mobile.png" alt="Onward mobile view" width="860" height="400"/>
   </p>
 
 ---
