@@ -10,6 +10,11 @@ export async function getGoalsForUser(userId: number) {
     with: {
       steps: {
         orderBy: [asc(goalSteps.position)],
+        with: {
+          substeps: {
+            orderBy: (substep, { asc }) => [asc(substep.position)],
+          },
+        },
       },
     },
   });
