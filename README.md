@@ -30,11 +30,9 @@ A calm, visual progress companion. Onward turns your goals, projects and courses
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Getting started](#getting-started)
-- [Environment variables](#environment-variables)
 - [Scripts](#scripts)
 - [Project structure](#project-structure)
 - [How it works](#how-it-works)
-- [Database](#database)
 - [Security](#security)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
@@ -243,8 +241,6 @@ The import fetches what a link allows and fills the form for you to review befor
 | Other websites | If the page shares them | No |
 
 Udemy and Coursera do not offer an open way to read their lesson lists, so Onward does not try to scrape them. Every request the server makes for a link first checks that the address is public, to prevent server-side request forgery.
-
-```
 
 A planned item (`plan_items`) is either a custom task, or a link to one step, sub-step, milestone, task or lesson. Deleting a goal keeps its projects and courses, and they become unconnected.
 
