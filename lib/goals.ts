@@ -132,21 +132,25 @@ export type GoalView = {
   steps: GoalStepView[];
 };
 
+type GoalStepRow = {
+  id: number;
+  title: string;
+  completed: boolean;
+  substeps: SubstepView[];
+};
+
 type GoalRow = {
   id: number;
   title: string;
   category: Category;
   description: string | null;
   targetDate: string | null;
-  steps: {
-    id: number;
-    title: string;
-    completed: boolean;
-    substeps: SubstepView[];
-  }[];
+  steps: (Omit<GoalStepRow, "substeps"> & {
+    substeps?: SubstepView[];
+  })[];
 };
 
-function stepFraction(step: GoalRow["steps"][number]) {
+function stepFraction(step: GoalStepRow) {
   if (step.substeps.length > 0) {
     return step.substeps.filter((x) => x.completed).length / step.substeps.length;
   }
@@ -154,10 +158,17 @@ function stepFraction(step: GoalRow["steps"][number]) {
 }
 
 export function toGoalView(row: GoalRow): GoalView {
-  const fractions = row.steps.map(stepFraction);
+  const stepsWithSubsteps = row.steps.map((step) => {
+    if (!step.substeps) {
+      throw new Error("Goal steps must be queried with their substeps.");
+    }
+
+    return { ...step, substeps: step.substeps };
+  });
+  const fractions = stepsWithSubsteps.map(stepFraction);
   const currentIndex = fractions.findIndex((f) => f < 1);
 
-  const steps: GoalStepView[] = row.steps.map((s, i) => ({
+  const steps: GoalStepView[] = stepsWithSubsteps.map((s, i) => ({
     id: s.id,
     title: s.title,
     completed: fractions[i] === 1,
