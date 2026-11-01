@@ -41,10 +41,12 @@ export default async function EditGoalPage({
             id: s.id,
             title: s.title,
             completed: s.completed,
+            targetDate: s.targetDate ?? "",
             substeps: s.substeps.map((x) => ({
               id: x.id,
               title: x.title,
               completed: x.completed,
+              targetDate: x.targetDate ?? "",
             })),
           })),
         }}

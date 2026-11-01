@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Check, ChevronDown, Flag } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronDown, Flag } from "lucide-react";
 import { toast } from "react-toastify";
 import { setItemCompleted, swapOrder } from "@/app/actions/journey";
 import type { GoalStepView } from "@/lib/goals";
@@ -70,8 +70,8 @@ export default function JourneyPath({
             {steps.length === 0
               ? "No steps yet."
               : finished
-              ? "Every step is finished."
-              : `You're on step ${currentIndex + 1} of ${steps.length}. Use the arrows to change what comes next.`}
+                ? "Every step is finished."
+                : `You're on step ${currentIndex + 1} of ${steps.length}. Use the arrows to change what comes next.`}
           </p>
         </div>
         <Link
@@ -86,7 +86,6 @@ export default function JourneyPath({
         {steps.map((step, i) => {
           const isCurrent = step.status === "current";
           const isDone = step.status === "done";
-          const isUpcoming = step.status === "upcoming";
           const open = overrides[step.id] ?? isCurrent;
           const doneSubs = step.substeps.filter((s) => s.completed).length;
           const nextSubId = isCurrent
@@ -105,9 +104,8 @@ export default function JourneyPath({
             <li key={step.id} className="relative flex gap-4 pb-6">
               <span
                 aria-hidden
-                className={`absolute bottom-0 left-5 top-10 w-0.5 -translate-x-1/2 ${
-                  isDone ? "bg-green-300" : "bg-stone-200"
-                }`}
+                className={`absolute bottom-0 left-5 top-10 w-0.5 -translate-x-1/2 ${isDone ? "bg-green-300" : "bg-stone-200"
+                  }`}
               />
 
               <span className="relative z-10 h-10 w-10 shrink-0">
@@ -115,24 +113,22 @@ export default function JourneyPath({
                   <span className="absolute inset-0 animate-ping rounded-full bg-green-400/30 motion-reduce:animate-none" />
                 )}
                 <span
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
-                    isDone
-                      ? "bg-green-500 text-white"
-                      : isCurrent
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${isDone
+                    ? "bg-green-500 text-white"
+                    : isCurrent
                       ? "border-2 border-green-500 bg-white text-green-700"
                       : "border-2 border-stone-200 bg-white text-stone-400"
-                  }`}
+                    }`}
                 >
                   {isDone ? <Check className="h-5 w-5" strokeWidth={3} /> : i + 1}
                 </span>
               </span>
 
               <div
-                className={`min-w-0 flex-1 rounded-2xl border ${
-                  isCurrent
-                    ? "border-green-200 bg-green-50"
-                    : "border-stone-200 bg-white"
-                }`}
+                className={`min-w-0 flex-1 rounded-2xl border ${isCurrent
+                  ? "border-green-200 bg-green-50"
+                  : "border-stone-200 bg-white"
+                  }`}
               >
                 <div className="flex items-center">
                   <button
@@ -149,20 +145,28 @@ export default function JourneyPath({
                         </p>
                       )}
                       <p
-                        className={`font-heading font-semibold ${
-                          isCurrent
-                            ? "text-lg text-stone-900"
-                            : isDone
+                        className={`font-heading font-semibold ${isCurrent
+                          ? "text-lg text-stone-900"
+                          : isDone
                             ? "text-stone-500"
                             : "text-stone-600"
-                        }`}
+                          }`}
                       >
                         {step.title}
                       </p>
+                      {step.dueLabel && (
+                        <p
+                          className={`mt-1 flex items-center gap-1.5 text-xs font-medium ${step.overdue ? "text-red-600" : "text-stone-400"
+                            }`}
+                        >
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {step.overdue ? "Overdue · " : "Due "}
+                          {step.dueLabel}
+                        </p>
+                      )}
                       <div
-                        className={`mt-2 h-1.5 rounded-full ${
-                          isCurrent ? "bg-white" : "bg-stone-100"
-                        }`}
+                        className={`mt-2 h-1.5 rounded-full ${isCurrent ? "bg-white" : "bg-stone-100"
+                          }`}
                       >
                         <div
                           className="h-full rounded-full bg-green-500 transition-all"
@@ -178,9 +182,8 @@ export default function JourneyPath({
                           : `${step.progress}%`}
                       </span>
                       <ChevronDown
-                        className={`h-4 w-4 text-stone-400 transition ${
-                          open ? "rotate-180" : ""
-                        }`}
+                        className={`h-4 w-4 text-stone-400 transition ${open ? "rotate-180" : ""
+                          }`}
                       />
                     </div>
                   </button>
@@ -216,7 +219,6 @@ export default function JourneyPath({
                     {step.substeps.length > 0 ? (
                       <ul className="space-y-1">
                         {step.substeps.map((sub) => {
-                          const canToggle = !isUpcoming;
                           const si = openSubs.findIndex((x) => x.id === sub.id);
                           const prevSubId = si > 0 ? openSubs[si - 1].id : undefined;
                           const nextSubIdMove =
@@ -232,39 +234,40 @@ export default function JourneyPath({
                             >
                               <button
                                 type="button"
-                                disabled={!canToggle || isPending}
+                                disabled={isPending}
                                 aria-pressed={sub.completed}
                                 aria-label={
                                   sub.completed
                                     ? `Mark "${sub.title}" as not finished`
                                     : `Mark "${sub.title}" as finished`
                                 }
-                                onClick={() =>
-                                  setDone("substep", sub.id, !sub.completed)
-                                }
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition disabled:cursor-default ${
-                                  sub.completed
-                                    ? "border-green-500 bg-green-500 text-white"
-                                    : `border-stone-300 bg-white ${
-                                        canToggle ? "hover:border-green-500" : ""
-                                      }`
-                                }`}
+                                onClick={() => setDone("substep", sub.id, !sub.completed)}
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${sub.completed
+                                  ? "border-green-500 bg-green-500 text-white"
+                                  : "border-stone-300 bg-white hover:border-green-500"
+                                  }`}
                               >
-                                {sub.completed && (
-                                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                                )}
+                                {sub.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                               </button>
                               <span
-                                className={`min-w-0 flex-1 ${
-                                  sub.completed
-                                    ? "text-stone-400 line-through"
-                                    : sub.id === nextSubId
+                                className={`min-w-0 flex-1 ${sub.completed
+                                  ? "text-stone-400 line-through"
+                                  : sub.id === nextSubId
                                     ? "font-semibold text-stone-900"
                                     : "text-stone-600"
-                                }`}
+                                  }`}
                               >
                                 {sub.title}
                               </span>
+                              {sub.dueLabel && (
+                                <span
+                                  className={`shrink-0 text-xs font-medium ${sub.overdue ? "text-red-600" : "text-stone-400"
+                                    }`}
+                                >
+                                  {sub.overdue ? "Overdue · " : ""}
+                                  {sub.dueLabel}
+                                </span>
+                              )}
                               {sub.id === nextSubId && (
                                 <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-green-700">
                                   Next
@@ -315,7 +318,8 @@ export default function JourneyPath({
                             Break it down
                           </Link>
                         </p>
-                        {isCurrent && (
+
+                        {!isDone && (
                           <button
                             type="button"
                             disabled={isPending}
@@ -346,26 +350,23 @@ export default function JourneyPath({
 
         <li className="relative flex gap-4">
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-              finished
-                ? "bg-green-500 text-white"
-                : "border-2 border-dashed border-stone-300 text-stone-400"
-            }`}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${finished
+              ? "bg-green-500 text-white"
+              : "border-2 border-dashed border-stone-300 text-stone-400"
+              }`}
           >
             <Flag className="h-4 w-4" />
           </span>
           <div className="pt-0.5">
             <p
-              className={`text-xs font-semibold uppercase tracking-wider ${
-                finished ? "text-green-700" : "text-stone-400"
-              }`}
+              className={`text-xs font-semibold uppercase tracking-wider ${finished ? "text-green-700" : "text-stone-400"
+                }`}
             >
               {finished ? "Goal reached" : "Destination"}
             </p>
             <p
-              className={`font-heading font-semibold ${
-                finished ? "text-stone-900" : "text-stone-500"
-              }`}
+              className={`font-heading font-semibold ${finished ? "text-stone-900" : "text-stone-500"
+                }`}
             >
               {goalTitle}
             </p>

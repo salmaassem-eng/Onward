@@ -17,7 +17,8 @@ export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
+  googleId: text("google_id").unique(),
   avatarUpdatedAt: timestamp("avatar_updated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -63,7 +64,7 @@ export const goalSteps = pgTable("goal_steps", {
   position: integer("position").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
-
+  targetDate: date("target_date"),
 });
 
 
@@ -76,6 +77,7 @@ export const goalSubsteps = pgTable("goal_substeps", {
   position: integer("position").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  targetDate: date("target_date"),
 });
 
 export const goalStepsRelations = relations(goalSteps, ({ one, many }) => ({

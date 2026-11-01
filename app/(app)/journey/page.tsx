@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import EmptyState from "@/components/app/EmptyState";
 import GoalGrid from "@/components/journey/GoalGrid";
 import JourneyPanel from "@/components/journey/JourneyPanel";
+import { getToday } from "@/lib/timezone";
 
 export default async function JourneyPage({
   searchParams,
@@ -14,8 +15,9 @@ export default async function JourneyPage({
   const user = await requireUser();
   const { goal: goalParam } = await searchParams;
 
+  const today = await getToday();
   const [goals, projects] = await Promise.all([
-    getUserGoals(user.id),
+    getUserGoals(user.id, today),
     getUserProjects(user.id),
   ]);
 
