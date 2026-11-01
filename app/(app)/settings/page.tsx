@@ -17,12 +17,13 @@ export default async function SettingsPage() {
     getUserSettings(user.id),
     getActivitySummary(user.id),
     db
-      .select({ createdAt: users.createdAt })
+      .select({ createdAt: users.createdAt, passwordHash: users.passwordHash })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1),
   ]);
 
+  const hasPassword = Boolean(account?.passwordHash);
   const memberSince = (account?.createdAt ?? new Date()).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -32,10 +33,15 @@ export default async function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader title="Settings" subtitle="Manage your account and preferences." />
 
-      <ProfileCard name={user.name} email={user.email} avatarVersion={user.avatarVersion} />
+      <ProfileCard
+        name={user.name}
+        email={user.email}
+        avatarVersion={user.avatarVersion}
+        hasPassword={hasPassword}
+      />
       <JourneyStats memberSince={memberSince} streak={activity.streak} total={activity.total} />
       <AppearanceCard initial={prefs.theme} />
-      <DangerZone />
+      <DangerZone hasPassword={hasPassword} />
     </div>
   );
 }
