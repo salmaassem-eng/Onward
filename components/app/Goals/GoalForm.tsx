@@ -2,13 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowDown,
-  ArrowUp,
-  CornerDownRight,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, CornerDownRight, Plus, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { createGoal, deleteGoal, updateGoal } from "@/app/actions/goals";
 import { swap } from "@/lib/array";
@@ -25,11 +19,18 @@ import FormField from "@/components/FormField";
 import Button from "@/components/Button";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 
-type SubState = { key: string; id?: number; title: string; completed: boolean };
+type SubState = {
+  key: string;
+  id?: number;
+  title: string;
+  targetDate: string;
+  completed: boolean;
+};
 type StepState = {
   key: string;
   id?: number;
   title: string;
+  targetDate: string;
   completed: boolean;
   substeps: SubState[];
 };
@@ -45,18 +46,52 @@ type GoalFormProps = {
       id: number;
       title: string;
       completed: boolean;
-      substeps: { id: number; title: string; completed: boolean }[];
+      targetDate: string;
+      substeps: { id: number; title: string; completed: boolean; targetDate: string }[];
     }[];
   };
 };
 
 const fieldBase =
   "rounded-xl border bg-white text-stone-900 outline-none transition placeholder:text-stone-400 focus:ring-2";
-const fieldOk =
-  "border-stone-200 focus:border-green-500 focus:ring-green-500/40";
+const fieldOk = "border-stone-200 focus:border-green-500 focus:ring-green-500/40";
 const fieldBad = "border-red-400 focus:ring-red-400/30";
 const iconButton =
-  "rounded-lg p-1.5 sm:p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-30 disabled:hover:bg-transparent";
+  "rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-30 disabled:hover:bg-transparent sm:p-2";
+
+function DueDate({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <label htmlFor={id} className="shrink-0 text-xs font-medium text-stone-400">
+        Due
+      </label>
+      <input
+        id={id}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${fieldBase} ${fieldOk} min-w-0 px-3 py-1.5 text-sm`}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="text-xs font-semibold text-stone-400 hover:text-red-600"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function GoalForm({ goalId, initial }: GoalFormProps) {
   const router = useRouter();
@@ -73,15 +108,17 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
           key: `step-${s.id}`,
           id: s.id,
           title: s.title,
+          targetDate: s.targetDate,
           completed: s.completed,
           substeps: s.substeps.map((x) => ({
             key: `sub-${x.id}`,
             id: x.id,
             title: x.title,
+            targetDate: x.targetDate,
             completed: x.completed,
           })),
         }))
-      : [{ key: "new-0", title: "", completed: false, substeps: [] }]
+      : [{ key: "new-0", title: "", targetDate: "", completed: false, substeps: [] }]
   );
   const [focusKey, setFocusKey] = useState<string | null>(null);
   const [errors, setErrors] = useState<GoalFormErrors>({});
@@ -98,25 +135,21 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
     clearError("steps");
   }
 
-  /* ----- steps ----- */
   function addStep() {
     if (steps.length >= MAX_STEPS) return;
     const key = `new-${nextKey.current++}`;
     setSteps((prev) => [
       ...prev,
-      { key, title: "", completed: false, substeps: [] },
+      { key, title: "", targetDate: "", completed: false, substeps: [] },
     ]);
     setFocusKey(key);
     clearError("steps");
   }
 
   function removeStep(key: string) {
-    setSteps((prev) =>
-      prev.length <= 1 ? prev : prev.filter((s) => s.key !== key)
-    );
+    setSteps((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.key !== key)));
   }
 
-  /* ----- sub-steps ----- */
   function addSubstep(stepKey: string) {
     const key = `sub-new-${nextKey.current++}`;
     patchStep(stepKey, (s) =>
@@ -124,7 +157,10 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
         ? s
         : {
             ...s,
-            substeps: [...s.substeps, { key, title: "", completed: false }],
+            substeps: [
+              ...s.substeps,
+              { key, title: "", targetDate: "", completed: false },
+            ],
           }
     );
     setFocusKey(key);
@@ -148,7 +184,12 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
       steps: steps.map((s) => ({
         id: s.id,
         title: s.title,
-        substeps: s.substeps.map((x) => ({ id: x.id, title: x.title })),
+        targetDate: s.targetDate,
+        substeps: s.substeps.map((x) => ({
+          id: x.id,
+          title: x.title,
+          targetDate: x.targetDate,
+        })),
       })),
     };
 
@@ -312,8 +353,8 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
             </span>
           </div>
           <p className="mb-3 mt-1 text-sm text-stone-400">
-            Steps are the big milestones, followed in this order. Add sub-steps
-            under a step for the small tasks.
+            Steps are the big milestones, followed in this order. Add sub-steps under a
+            step for the small tasks. Each one can have a due date.
           </p>
 
           <ul className="space-y-3">
@@ -332,10 +373,7 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
                     value={step.title}
                     autoFocus={step.key === focusKey}
                     onChange={(e) =>
-                      patchStep(step.key, (s) => ({
-                        ...s,
-                        title: e.target.value,
-                      }))
+                      patchStep(step.key, (s) => ({ ...s, title: e.target.value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -381,74 +419,96 @@ export default function GoalForm({ goalId, initial }: GoalFormProps) {
                   </div>
                 </div>
 
+                <div className="ml-10 mt-2">
+                  <DueDate
+                    id={`step-date-${step.key}`}
+                    value={step.targetDate}
+                    onChange={(v) => patchStep(step.key, (s) => ({ ...s, targetDate: v }))}
+                  />
+                </div>
+
                 {step.substeps.length > 0 && (
-                  <ul className="ml-4 mt-3 space-y-2 border-l-2 border-stone-200 pl-4">
+                  <ul className="ml-4 mt-3 space-y-3 border-l-2 border-stone-200 pl-4">
                     {step.substeps.map((sub, j) => (
-                      <li key={sub.key} className="flex items-center gap-1">
-                        <input
-                          aria-label={`Sub-step ${j + 1} of step ${i + 1}`}
-                          placeholder="Describe this sub-step"
-                          value={sub.title}
-                          autoFocus={sub.key === focusKey}
-                          onChange={(e) =>
-                            patchStep(step.key, (s) => ({
-                              ...s,
-                              substeps: s.substeps.map((x) =>
-                                x.key === sub.key
-                                  ? { ...x, title: e.target.value }
-                                  : x
-                              ),
-                            }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addSubstep(step.key);
+                      <li key={sub.key} className="space-y-1.5">
+                        <div className="flex items-center gap-1">
+                          <input
+                            aria-label={`Sub-step ${j + 1} of step ${i + 1}`}
+                            placeholder="Describe this sub-step"
+                            value={sub.title}
+                            autoFocus={sub.key === focusKey}
+                            onChange={(e) =>
+                              patchStep(step.key, (s) => ({
+                                ...s,
+                                substeps: s.substeps.map((x) =>
+                                  x.key === sub.key ? { ...x, title: e.target.value } : x
+                                ),
+                              }))
                             }
-                          }}
-                          className={`${fieldBase} ${fieldOk} min-w-0 flex-1 px-3 py-2 text-sm`}
-                        />
-                        {sub.completed && (
-                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                            Done
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            patchStep(step.key, (s) => ({
-                              ...s,
-                              substeps: swap(s.substeps, j, -1),
-                            }))
-                          }
-                          disabled={j === 0}
-                          aria-label="Move sub-step up"
-                          className={iconButton}
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            patchStep(step.key, (s) => ({
-                              ...s,
-                              substeps: swap(s.substeps, j, 1),
-                            }))
-                          }
-                          disabled={j === step.substeps.length - 1}
-                          aria-label="Move sub-step down"
-                          className={iconButton}
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeSubstep(step.key, sub.key)}
-                          aria-label="Remove sub-step"
-                          className={`${iconButton} hover:!bg-red-50 hover:!text-red-600`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addSubstep(step.key);
+                              }
+                            }}
+                            className={`${fieldBase} ${fieldOk} min-w-0 flex-1 px-3 py-2 text-sm`}
+                          />
+                          {sub.completed && (
+                            <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                              Done
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              patchStep(step.key, (s) => ({
+                                ...s,
+                                substeps: swap(s.substeps, j, -1),
+                              }))
+                            }
+                            disabled={j === 0}
+                            aria-label="Move sub-step up"
+                            className={iconButton}
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              patchStep(step.key, (s) => ({
+                                ...s,
+                                substeps: swap(s.substeps, j, 1),
+                              }))
+                            }
+                            disabled={j === step.substeps.length - 1}
+                            aria-label="Move sub-step down"
+                            className={iconButton}
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSubstep(step.key, sub.key)}
+                            aria-label="Remove sub-step"
+                            className={`${iconButton} hover:!bg-red-50 hover:!text-red-600`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <div className="pl-1">
+                          <DueDate
+                            id={`sub-date-${sub.key}`}
+                            value={sub.targetDate}
+                            onChange={(v) =>
+                              patchStep(step.key, (s) => ({
+                                ...s,
+                                substeps: s.substeps.map((x) =>
+                                  x.key === sub.key ? { ...x, targetDate: v } : x
+                                ),
+                              }))
+                            }
+                          />
+                        </div>
                       </li>
                     ))}
                   </ul>

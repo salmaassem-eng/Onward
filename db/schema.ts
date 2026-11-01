@@ -63,7 +63,7 @@ export const goalSteps = pgTable("goal_steps", {
   position: integer("position").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
-
+targetDate: date("target_date"),
 });
 
 
@@ -76,6 +76,7 @@ export const goalSubsteps = pgTable("goal_substeps", {
   position: integer("position").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  targetDate: date("target_date"),
 });
 
 export const goalStepsRelations = relations(goalSteps, ({ one, many }) => ({

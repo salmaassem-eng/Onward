@@ -1,3 +1,5 @@
+import { isValidDate } from "./dates";
+
 export const CATEGORIES = ["Career", "Learning", "Health", "Personal"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -6,10 +8,11 @@ export const MAX_SUBSTEPS = 15;
 
 /* ---------- form values + validation (client and server) ---------- */
 
-export type SubstepInput = { id?: number; title: string };
+export type SubstepInput = { id?: number; title: string; targetDate: string };
 export type GoalStepInput = {
   id?: number;
   title: string;
+  targetDate: string; // "YYYY-MM-DD" or ""
   substeps: SubstepInput[];
 };
 
@@ -34,8 +37,13 @@ export function cleanSteps(steps: GoalStepInput[]): GoalStepInput[] {
     .map((s) => ({
       ...s,
       title: s.title.trim(),
+      targetDate: (s.targetDate ?? "").trim(),
       substeps: s.substeps
-        .map((x) => ({ ...x, title: x.title.trim() }))
+        .map((x) => ({
+          ...x,
+          title: x.title.trim(),
+          targetDate: (x.targetDate ?? "").trim(),
+        }))
         .filter((x) => x.title.length > 0),
     }))
     .filter((s) => s.title.length > 0);
@@ -59,18 +67,27 @@ export function validateGoal(values: GoalFormValues): GoalFormErrors {
     errors.description = "Keep the description under 300 characters.";
   }
 
-  if (values.targetDate && !/^\d{4}-\d{2}-\d{2}$/.test(values.targetDate)) {
+  if (values.targetDate && !isValidDate(values.targetDate)) {
     errors.targetDate = "Enter a valid date.";
   }
 
   const steps = cleanSteps(values.steps);
   const orphanSubsteps = values.steps.some(
+    (s) => s.title.trim() === "" && s.substeps.some((x) => x.title.trim() !== "")
+  );
+  const badDate = values.steps.some(
     (s) =>
-      s.title.trim() === "" && s.substeps.some((x) => x.title.trim() !== "")
+      (s.targetDate && !isValidDate(s.targetDate)) ||
+      s.substeps.some((x) => x.targetDate && !isValidDate(x.targetDate))
+  );
+  const lateSubstep = steps.some(
+    (s) => s.targetDate && s.substeps.some((x) => x.targetDate && x.targetDate > s.targetDate)
   );
 
   if (orphanSubsteps) {
     errors.steps = "Give each step a title before adding sub-steps to it.";
+  } else if (badDate) {
+    errors.steps = "One of the step or sub-step dates isn't valid.";
   } else if (steps.length === 0) {
     errors.steps = "Add at least one step.";
   } else if (steps.length > MAX_STEPS) {
@@ -83,6 +100,8 @@ export function validateGoal(values: GoalFormValues): GoalFormErrors {
     errors.steps = "Keep each step and sub-step under 100 characters.";
   } else if (steps.some((s) => s.substeps.length > MAX_SUBSTEPS)) {
     errors.steps = `A step can have up to ${MAX_SUBSTEPS} sub-steps.`;
+  } else if (lateSubstep) {
+    errors.steps = "A sub-step can't be due after its step.";
   }
 
   return errors;
@@ -98,7 +117,22 @@ export function formatTargetDate(value: string | null) {
   });
 }
 
-export type SubstepView = { id: number; title: string; completed: boolean };
+export function formatDay(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export type SubstepView = {
+  id: number;
+  title: string;
+  completed: boolean;
+  targetDate: string | null;
+  dueLabel: string | null;
+  overdue: boolean;
+};
 export type StepStatus = "done" | "current" | "upcoming";
 
 export type GoalStepView = {
@@ -107,6 +141,9 @@ export type GoalStepView = {
   completed: boolean; // derived: every sub-step is done (or the step itself)
   status: StepStatus;
   progress: number;
+  targetDate: string | null;
+  dueLabel: string | null;
+  overdue: boolean;
   substeps: SubstepView[];
 };
 
@@ -115,6 +152,8 @@ export type NextAction = {
   id: number;
   title: string;
   parent: string;
+  dueLabel: string | null;
+  overdue: boolean;
 };
 
 export type GoalView = {
@@ -132,54 +171,63 @@ export type GoalView = {
   steps: GoalStepView[];
 };
 
-type GoalStepRow = {
-  id: number;
-  title: string;
-  completed: boolean;
-  substeps: SubstepView[];
-};
-
 type GoalRow = {
   id: number;
   title: string;
   category: Category;
   description: string | null;
   targetDate: string | null;
-  steps: (Omit<GoalStepRow, "substeps"> & {
-    substeps?: SubstepView[];
-  })[];
+  steps: {
+    id: number;
+    title: string;
+    completed: boolean;
+    targetDate: string | null;
+    substeps: {
+      id: number;
+      title: string;
+      completed: boolean;
+      targetDate: string | null;
+    }[];
+  }[];
 };
 
-function stepFraction(step: GoalStepRow) {
+function stepFraction(step: GoalRow["steps"][number]) {
   if (step.substeps.length > 0) {
     return step.substeps.filter((x) => x.completed).length / step.substeps.length;
   }
   return step.completed ? 1 : 0;
 }
 
-export function toGoalView(row: GoalRow): GoalView {
-  const stepsWithSubsteps = row.steps.map((step) => {
-    if (!step.substeps) {
-      throw new Error("Goal steps must be queried with their substeps.");
-    }
+function due(date: string | null, completed: boolean, today?: string) {
+  return {
+    targetDate: date,
+    dueLabel: date ? formatDay(date) : null,
+    overdue: Boolean(date && today && !completed && date < today),
+  };
+}
 
-    return { ...step, substeps: step.substeps };
-  });
-  const fractions = stepsWithSubsteps.map(stepFraction);
+// `today` ("YYYY-MM-DD" in the user's time zone) is only needed to mark overdue items
+export function toGoalView(row: GoalRow, today?: string): GoalView {
+  const fractions = row.steps.map(stepFraction);
   const currentIndex = fractions.findIndex((f) => f < 1);
 
-  const steps: GoalStepView[] = stepsWithSubsteps.map((s, i) => ({
-    id: s.id,
-    title: s.title,
-    completed: fractions[i] === 1,
-    status: fractions[i] === 1 ? "done" : i === currentIndex ? "current" : "upcoming",
-    progress: Math.round(fractions[i] * 100),
-    substeps: s.substeps.map(({ id, title, completed }) => ({
-      id,
-      title,
-      completed,
-    })),
-  }));
+  const steps: GoalStepView[] = row.steps.map((s, i) => {
+    const done = fractions[i] === 1;
+    return {
+      id: s.id,
+      title: s.title,
+      completed: done,
+      status: done ? "done" : i === currentIndex ? "current" : "upcoming",
+      progress: Math.round(fractions[i] * 100),
+      ...due(s.targetDate, done, today),
+      substeps: s.substeps.map((x) => ({
+        id: x.id,
+        title: x.title,
+        completed: x.completed,
+        ...due(x.targetDate, x.completed, today),
+      })),
+    };
+  });
 
   const total = steps.length;
   const average = total === 0 ? 0 : fractions.reduce((a, b) => a + b, 0) / total;
@@ -191,10 +239,24 @@ export function toGoalView(row: GoalRow): GoalView {
   if (cur) {
     const sub = cur.substeps.find((x) => !x.completed);
     if (sub) {
-      nextAction = { kind: "substep", id: sub.id, title: sub.title, parent: cur.title };
+      nextAction = {
+        kind: "substep",
+        id: sub.id,
+        title: sub.title,
+        parent: cur.title,
+        dueLabel: sub.dueLabel,
+        overdue: sub.overdue,
+      };
       next = sub.title;
     } else {
-      nextAction = { kind: "step", id: cur.id, title: cur.title, parent: row.title };
+      nextAction = {
+        kind: "step",
+        id: cur.id,
+        title: cur.title,
+        parent: row.title,
+        dueLabel: cur.dueLabel,
+        overdue: cur.overdue,
+      };
       next = steps.slice(currentIndex + 1).find((s) => s.status !== "done")?.title ?? null;
     }
   }

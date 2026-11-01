@@ -100,6 +100,15 @@ export default function GoalHero({ goal }: { goal: GoalView }) {
                 {action.title}
               </p>
               <p className="mt-1 text-sm text-stone-400">{action.parent}</p>
+              {action.dueLabel && (
+                <p
+                  className={`mt-1 text-sm font-medium ${action.overdue ? "text-red-400" : "text-green-400"
+                    }`}
+                >
+                  {action.overdue ? "Overdue · was due " : "Due "}
+                  {action.dueLabel}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={finish}

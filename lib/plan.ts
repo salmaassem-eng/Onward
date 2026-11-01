@@ -83,7 +83,7 @@ export function buildCandidates(
           kind: "goal_substep",
           id: sub.id,
           title: sub.title,
-          source: `${goal.title} · ${step.title}`,
+          source: `${goal.title} · ${step.title}${sub.dueLabel ? ` · due ${sub.dueLabel}` : ""}`,
           tag: goal.category,
         });
       }
@@ -93,7 +93,7 @@ export function buildCandidates(
         kind: "goal_step",
         id: step.id,
         title: step.title,
-        source: goal.title,
+        source: `${goal.title} · ${step.title}${step.dueLabel ? ` · due ${step.dueLabel}` : ""}`,
         tag: goal.category,
       });
     }

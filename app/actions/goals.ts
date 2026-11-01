@@ -14,10 +14,11 @@ import {
 import { requireUser } from "@/lib/session";
 
 export type GoalResult =
-  | { ok: true; id?: number}
+  | { ok: true; id?: number }
   | { ok: false; errors?: GoalFormErrors; message?: string };
 
 function refresh() {
+  revalidatePath("/goals");
   revalidatePath("/journey");
   revalidatePath("/dashboard");
   revalidatePath("/week");
@@ -44,7 +45,14 @@ export async function createGoal(values: GoalFormValues): Promise<GoalResult> {
 
   const inserted = await db
     .insert(goalSteps)
-    .values(steps.map((s, i) => ({ goalId: goal.id, title: s.title, position: i })))
+    .values(
+      steps.map((s, i) => ({
+        goalId: goal.id,
+        title: s.title,
+        position: i,
+        targetDate: s.targetDate || null,
+      }))
+    )
     .returning({ id: goalSteps.id });
   // identity ids grow in insert order, so sorting restores the form order
   inserted.sort((a, b) => a.id - b.id);
@@ -54,6 +62,7 @@ export async function createGoal(values: GoalFormValues): Promise<GoalResult> {
       stepId: inserted[i].id,
       title: x.title,
       position: j,
+      targetDate: x.targetDate || null,
     }))
   );
   if (subs.length > 0) await db.insert(goalSubsteps).values(subs);
@@ -115,7 +124,7 @@ export async function updateGoal(
       stepUpdates.push(
         db
           .update(goalSteps)
-          .set({ title: s.title, position: i })
+          .set({ title: s.title, position: i, targetDate: s.targetDate || null })
           .where(and(eq(goalSteps.id, finalIds[i]), eq(goalSteps.goalId, id)))
       );
     }
@@ -127,7 +136,12 @@ export async function updateGoal(
     const inserted = await db
       .insert(goalSteps)
       .values(
-        newIndexes.map((i) => ({ goalId: id, title: steps[i].title, position: i }))
+        newIndexes.map((i) => ({
+          goalId: id,
+          title: steps[i].title,
+          position: i,
+          targetDate: steps[i].targetDate || null,
+        }))
       )
       .returning({ id: goalSteps.id });
     inserted.sort((a, b) => a.id - b.id);
@@ -145,7 +159,12 @@ export async function updateGoal(
 
   const keptSubs = new Set<number>();
   const subUpdates: PromiseLike<unknown>[] = [];
-  const subInserts: { stepId: number; title: string; position: number }[] = [];
+  const subInserts: {
+    stepId: number;
+    title: string;
+    position: number;
+    targetDate: string | null;
+  }[] = [];
 
   steps.forEach((s, i) => {
     s.substeps.forEach((sub, j) => {
@@ -154,11 +173,16 @@ export async function updateGoal(
         subUpdates.push(
           db
             .update(goalSubsteps)
-            .set({ title: sub.title, position: j })
+            .set({ title: sub.title, position: j, targetDate: sub.targetDate || null })
             .where(eq(goalSubsteps.id, sub.id))
         );
       } else {
-        subInserts.push({ stepId: finalIds[i], title: sub.title, position: j });
+        subInserts.push({
+          stepId: finalIds[i],
+          title: sub.title,
+          position: j,
+          targetDate: sub.targetDate || null,
+        });
       }
     });
   });
@@ -171,7 +195,7 @@ export async function updateGoal(
   if (subInserts.length > 0) await db.insert(goalSubsteps).values(subInserts);
 
   refresh();
-  return { ok: true, id};
+  return { ok: true, id };
 }
 
 export async function deleteGoal(id: number) {

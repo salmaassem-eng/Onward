@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { goals } from "@/db/schema";
 import { toGoalView } from "./goals";
 
-export async function getUserGoals(userId: number) {
+export async function getUserGoals(userId: number, today?: string) {
   const rows = await db.query.goals.findMany({
     where: eq(goals.userId, userId),
     with: {
@@ -14,7 +14,7 @@ export async function getUserGoals(userId: number) {
     },
     orderBy: (g, { desc }) => [desc(g.id)],
   });
-  return rows.map(toGoalView);
+  return rows.map((r) => toGoalView(r, today));
 }
 
 // raw row (with dates and descriptions) for the edit form
