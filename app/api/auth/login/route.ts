@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       .where(eq(users.email, email.trim().toLowerCase()))
       .limit(1);
 
-    if (!user || !(await compare(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await compare(password, user.passwordHash))) {
       return Response.json(
         { error: "Email or password is incorrect." },
         { status: 401 },
