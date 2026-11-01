@@ -86,7 +86,6 @@ export default function JourneyPath({
         {steps.map((step, i) => {
           const isCurrent = step.status === "current";
           const isDone = step.status === "done";
-          const isUpcoming = step.status === "upcoming";
           const open = overrides[step.id] ?? isCurrent;
           const doneSubs = step.substeps.filter((s) => s.completed).length;
           const nextSubId = isCurrent
@@ -155,16 +154,16 @@ export default function JourneyPath({
                       >
                         {step.title}
                       </p>
-                       {step.dueLabel && (
-                          <p
-                            className={`mt-1 flex items-center gap-1.5 text-xs font-medium ${step.overdue ? "text-red-600" : "text-stone-400"
-                              }`}
-                          >
-                            <CalendarDays className="h-3.5 w-3.5" />
-                            {step.overdue ? "Overdue · " : "Due "}
-                            {step.dueLabel}
-                          </p>
-                        )}
+                      {step.dueLabel && (
+                        <p
+                          className={`mt-1 flex items-center gap-1.5 text-xs font-medium ${step.overdue ? "text-red-600" : "text-stone-400"
+                            }`}
+                        >
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {step.overdue ? "Overdue · " : "Due "}
+                          {step.dueLabel}
+                        </p>
+                      )}
                       <div
                         className={`mt-2 h-1.5 rounded-full ${isCurrent ? "bg-white" : "bg-stone-100"
                           }`}
@@ -220,7 +219,6 @@ export default function JourneyPath({
                     {step.substeps.length > 0 ? (
                       <ul className="space-y-1">
                         {step.substeps.map((sub) => {
-                          const canToggle = !isUpcoming;
                           const si = openSubs.findIndex((x) => x.id === sub.id);
                           const prevSubId = si > 0 ? openSubs[si - 1].id : undefined;
                           const nextSubIdMove =
@@ -236,25 +234,20 @@ export default function JourneyPath({
                             >
                               <button
                                 type="button"
-                                disabled={!canToggle || isPending}
+                                disabled={isPending}
                                 aria-pressed={sub.completed}
                                 aria-label={
                                   sub.completed
                                     ? `Mark "${sub.title}" as not finished`
                                     : `Mark "${sub.title}" as finished`
                                 }
-                                onClick={() =>
-                                  setDone("substep", sub.id, !sub.completed)
-                                }
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition disabled:cursor-default ${sub.completed
+                                onClick={() => setDone("substep", sub.id, !sub.completed)}
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${sub.completed
                                   ? "border-green-500 bg-green-500 text-white"
-                                  : `border-stone-300 bg-white ${canToggle ? "hover:border-green-500" : ""
-                                  }`
+                                  : "border-stone-300 bg-white hover:border-green-500"
                                   }`}
                               >
-                                {sub.completed && (
-                                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                                )}
+                                {sub.completed && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                               </button>
                               <span
                                 className={`min-w-0 flex-1 ${sub.completed
@@ -325,7 +318,8 @@ export default function JourneyPath({
                             Break it down
                           </Link>
                         </p>
-                        {isCurrent && (
+
+                        {!isDone && (
                           <button
                             type="button"
                             disabled={isPending}

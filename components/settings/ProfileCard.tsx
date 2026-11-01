@@ -16,6 +16,7 @@ type ProfileCardProps = {
   name: string;
   email: string;
   avatarVersion: number | null;
+  hasPassword: boolean;
 };
 
 // center-crop to a square, 256x256, WebP (JPEG where WebP isn't supported)
@@ -55,7 +56,7 @@ async function resizeAvatar(file: File): Promise<Blob> {
   return jpeg;
 }
 
-export default function ProfileCard({ name, email, avatarVersion }: ProfileCardProps) {
+export default function ProfileCard({ name, email, avatarVersion, hasPassword }: ProfileCardProps) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(name);
@@ -219,15 +220,19 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
         <div>
           <p className="mb-2 text-sm font-medium text-stone-700">Password</p>
           <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-5 py-3">
-            <span className="min-w-0 flex-1 tracking-widest text-stone-500" aria-hidden>
-              ••••••••••
+            <span className="min-w-0 flex-1 truncate text-stone-500">
+              {hasPassword ? (
+                <span className="tracking-widest" aria-hidden>••••••••••</span>
+              ) : (
+                "Not set. You sign in with Google."
+              )}
             </span>
             <button
               type="button"
               onClick={() => setChangingPassword(true)}
               className="shrink-0 text-sm font-semibold text-green-600 hover:underline"
             >
-              Change password
+              {hasPassword ? "Change password" : "Set a password"}
             </button>
           </div>
         </div>
@@ -243,6 +248,7 @@ export default function ProfileCard({ name, email, avatarVersion }: ProfileCardP
 
       <ChangePasswordModal
         open={changingPassword}
+        hasPassword={hasPassword}
         onClose={() => setChangingPassword(false)}
       />
     </section>

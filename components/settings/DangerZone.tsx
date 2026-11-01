@@ -9,12 +9,13 @@ import { reportErrors } from "@/lib/notify";
 import Modal from "@/components/ui/Modal";
 import FormField from "@/components/FormField";
 
-export default function DangerZone() {
+export default function DangerZone({ hasPassword }: { hasPassword: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const msg = hasPassword ? "Enter your password to confirm." : "Type your email to confirm.";
 
   function close() {
     if (busy) return;
@@ -27,7 +28,6 @@ export default function DangerZone() {
     e.preventDefault();
 
     if (!password) {
-      const msg = "Enter your password to confirm.";
       setError(msg);
       reportErrors({ password: msg });
       return;
@@ -38,7 +38,6 @@ export default function DangerZone() {
       const result = await deleteAccount(password);
       if (!result.ok) {
         const msg = result.errors?.password ?? result.message ?? "Couldn't delete the account.";
-        setError(result.errors?.password);
         toast.error(msg);
         return;
       }
@@ -99,10 +98,10 @@ export default function DangerZone() {
 
           <div className="mt-5">
             <FormField
-              label="Confirm with your password"
+              label={hasPassword ? "Confirm with your password" : "Type your email to confirm"}
               id="delete-password"
-              type="password"
-              autoComplete="current-password"
+              type={hasPassword ? "password" : "email"}
+              autoComplete={hasPassword ? "current-password" : "off"}
               autoFocus
               value={password}
               onChange={(e) => {

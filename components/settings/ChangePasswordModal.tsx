@@ -12,21 +12,21 @@ import Button from "@/components/Button";
 
 type Errors = { current?: string; next?: string };
 
-export default function ChangePasswordModal({
-  open,
-  onClose,
-}: {
+type ChangePasswordModalProps = {
   open: boolean;
+  hasPassword: boolean;
   onClose: () => void;
-}) {
+};
+
+export default function ChangePasswordModal({ open, hasPassword, onClose }: ChangePasswordModalProps) {
   return (
     <Modal open={open} onClose={onClose} labelledBy="change-password-title" width="max-w-md">
-      <Body onClose={onClose} />
+      <Body hasPassword={hasPassword} onClose={onClose} />
     </Modal>
   );
 }
 
-function Body({ onClose }: { onClose: () => void }) {
+function Body({ hasPassword, onClose }: { hasPassword: boolean; onClose: () => void }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [errors, setErrors] = useState<Errors>({});
@@ -36,10 +36,10 @@ function Body({ onClose }: { onClose: () => void }) {
     e.preventDefault();
 
     const found: Errors = {};
-    if (!current) found.current = "Enter your current password.";
+    if (hasPassword && !current) found.current = "Enter your current password.";
     const nextError = validateNewPassword(next);
     if (nextError) found.next = nextError;
-    else if (next === current) found.next = "Choose a different password.";
+    else if (hasPassword && next === current) found.next = "Choose a different password.";
 
     if (Object.keys(found).length > 0) {
       setErrors(found);
@@ -49,7 +49,7 @@ function Body({ onClose }: { onClose: () => void }) {
 
     setBusy(true);
     try {
-      const result = await changePassword(current, next);
+      const result = await changePassword(hasPassword ? current : "", next);
       if (!result.ok) {
         if (result.errors) {
           setErrors(result.errors);
@@ -59,7 +59,11 @@ function Body({ onClose }: { onClose: () => void }) {
         return;
       }
 
-      toast.success("Password changed. Your other devices were signed out.");
+      toast.success(
+        hasPassword
+          ? "Password changed. Your other devices were signed out."
+          : "Password set. You can now sign in with it too."
+      );
       onClose();
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -84,36 +88,38 @@ function Body({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      <h2
-        id="change-password-title"
-        className="font-heading mt-4 text-lg font-semibold text-stone-900"
-      >
-        Change your password
+      <h2 id="change-password-title" className="font-heading mt-4 text-lg font-semibold text-stone-900">
+        {hasPassword ? "Change your password" : "Set a password"}
       </h2>
       <p className="mt-1 text-sm text-stone-500">
-        You will stay signed in here. Your other devices are signed out.
+        {hasPassword
+          ? "You will stay signed in here. Your other devices are signed out."
+          : "You sign in with Google now. A password lets you sign in with your email too."}
       </p>
 
       <div className="mt-5 space-y-5">
-        <FormField
-          label="Current password"
-          id="current-password"
-          type="password"
-          autoComplete="current-password"
-          autoFocus
-          value={current}
-          onChange={(e) => {
-            setCurrent(e.target.value);
-            setErrors((prev) => ({ ...prev, current: undefined }));
-          }}
-          error={errors.current}
-        />
+        {hasPassword && (
+          <FormField
+            label="Current password"
+            id="current-password"
+            type="password"
+            autoComplete="current-password"
+            autoFocus
+            value={current}
+            onChange={(e) => {
+              setCurrent(e.target.value);
+              setErrors((prev) => ({ ...prev, current: undefined }));
+            }}
+            error={errors.current}
+          />
+        )}
         <FormField
           label="New password"
           id="new-password"
           type="password"
           autoComplete="new-password"
           placeholder="At least 8 characters"
+          autoFocus={!hasPassword}
           value={next}
           onChange={(e) => {
             setNext(e.target.value);
@@ -133,7 +139,7 @@ function Body({ onClose }: { onClose: () => void }) {
         </button>
         <div className="flex-1">
           <Button type="submit" loading={busy}>
-            Change password
+            {hasPassword ? "Change password" : "Set password"}
           </Button>
         </div>
       </div>

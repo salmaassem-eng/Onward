@@ -9,6 +9,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { destroyOtherSessions, destroySession, requireUser } from "@/lib/session";
 import { isTheme, validateName, validateNewPassword } from "@/lib/settings";
 
+type PasswordCheck = "ok" | "wrong" | "none" | "missing";
+
 export type SettingsResult =
   | { ok: true }
   | { ok: false; message?: string; errors?: Record<string, string> };
@@ -17,6 +19,17 @@ const MAX_AVATAR_BYTES = 150_000;
 const HOUR = 60 * 60 * 1000;
 
 const refreshAll = () => revalidatePath("/", "layout");
+
+async function checkPassword(userId: number, password: string): Promise<PasswordCheck> {
+  const [row] = await db
+    .select({ hash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row) return "missing";
+  if (!row.hash) return "none"; // signed up with Google, no password yet
+  return (await bcrypt.compare(String(password ?? ""), row.hash)) ? "ok" : "wrong";
+}
 
 // never trust the file type the browser reports: read the real signature
 function sniffImage(buf: Buffer): "image/webp" | "image/jpeg" | "image/png" | null {
@@ -106,10 +119,7 @@ export async function updateTheme(theme: string): Promise<SettingsResult> {
   return { ok: true };
 }
 
-export async function changePassword(
-  current: string,
-  next: string
-): Promise<SettingsResult> {
+export async function changePassword(current: string, next: string): Promise<SettingsResult> {
   const user = await requireUser();
 
   if (!(await rateLimit(`password:${user.id}`, 5, 15 * 60 * 1000))) {
@@ -119,48 +129,42 @@ export async function changePassword(
   const nextError = validateNewPassword(String(next ?? ""));
   if (nextError) return { ok: false, errors: { next: nextError } };
 
-  const [row] = await db
-    .select({ passwordHash: users.passwordHash })
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1);
-  if (!row) return { ok: false, message: "Account not found." };
-
-  const valid = await bcrypt.compare(String(current ?? ""), row.passwordHash);
-  if (!valid) return { ok: false, errors: { current: "That password is wrong." } };
-  if (current === next) {
+  const check = await checkPassword(user.id, current);
+  if (check === "missing") return { ok: false, message: "Account not found." };
+  if (check === "wrong") return { ok: false, errors: { current: "That password is wrong." } };
+  if (check === "ok" && current === next) {
     return { ok: false, errors: { next: "Choose a different password." } };
   }
 
+  // a Google account ("none") can set its first password without a current one
   await db
     .update(users)
     .set({ passwordHash: await bcrypt.hash(next, 12) })
     .where(eq(users.id, user.id));
 
-  // anyone else logged in with the old password is signed out
   await destroyOtherSessions(user.id);
+  revalidatePath("/settings");
   return { ok: true };
 }
 
-export async function deleteAccount(password: string): Promise<SettingsResult> {
+export async function deleteAccount(input: string): Promise<SettingsResult> {
   const user = await requireUser();
 
   if (!(await rateLimit(`delete-account:${user.id}`, 5, 15 * 60 * 1000))) {
     return { ok: false, message: "Too many attempts. Try again in a few minutes." };
   }
 
-  const [row] = await db
-    .select({ passwordHash: users.passwordHash })
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1);
-  if (!row) return { ok: false, message: "Account not found." };
-
-  const valid = await bcrypt.compare(String(password ?? ""), row.passwordHash);
-  if (!valid) return { ok: false, errors: { password: "That password is wrong." } };
+  const check = await checkPassword(user.id, input);
+  if (check === "missing") return { ok: false, message: "Account not found." };
+  if (check === "wrong") return { ok: false, errors: { password: "That password is wrong." } };
+  if (check === "none") {
+    // Google accounts confirm by typing their email
+    if (String(input ?? "").trim().toLowerCase() !== user.email.toLowerCase()) {
+      return { ok: false, errors: { password: "That doesn't match your email." } };
+    }
+  }
 
   await destroySession();
-  // goals, projects, courses, plan, sessions, avatar and settings all go with it (cascade)
   await db.delete(users).where(eq(users.id, user.id));
 
   refreshAll();
