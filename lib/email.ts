@@ -1,4 +1,5 @@
 import "server-only";
+import nodemailer, { type Transporter } from "nodemailer";
 
 const ESCAPES: Record<string, string> = {
   "&": "&amp;",
@@ -10,21 +11,36 @@ const ESCAPES: Record<string, string> = {
 // anything a user typed (like the name) is escaped before it goes into HTML
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ESCAPES[c]);
 
+let transporter: Transporter | null = null;
+
+function getTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
+  if (!user || !pass) throw new Error("Email is not configured");
+
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user, pass },
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
+    });
+  }
+  return transporter;
+}
+
 async function sendEmail(message: { to: string; subject: string; html: string; text: string }) {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!key || !from) throw new Error("Email is not configured");
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-body: JSON.stringify({ from, ...message, to: [message.to] }),    signal: AbortSignal.timeout(10_000),
+  await getTransporter().sendMail({
+    // Gmail always sends from the logged-in account, so the address is fixed
+    from: { name: process.env.EMAIL_FROM_NAME ?? "Onward", address: process.env.GMAIL_USER! },
+    to: message.to,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
   });
-
-  if (!res.ok) throw new Error(`Email provider returned ${res.status}`);
 }
 
 export async function sendPasswordResetEmail(args: {
