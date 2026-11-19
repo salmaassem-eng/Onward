@@ -194,6 +194,26 @@ export const planItemsRelations = relations(planItems, ({ one }) => ({
   courseLesson: one(courseLessons, { fields: [planItems.courseLessonId], references: [courseLessons.id] }),
 }));
 
+export const routines = pgTable("routines", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  category: text("category", { enum: CATEGORIES }).notNull(),
+  startDate: date("start_date").notNull(), 
+  endDate: date("end_date"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+
+export const routineChecks = pgTable("routine_checks", {
+  id: text("id").primaryKey(),
+  routineId: integer("routine_id")
+    .notNull()
+    .references(() => routines.id, { onDelete: "cascade" }),
+  date: date("date").notNull(),
+});
 
 //learning page 
 export const courses = pgTable("courses", {

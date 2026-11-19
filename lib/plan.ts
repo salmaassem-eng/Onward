@@ -13,13 +13,16 @@ export const REF_KINDS = [
 export type RefKind = (typeof REF_KINDS)[number];
 
 export type PlanItemView = {
-  id: number;
+  key: string; // unique inside a list
+  id: number; 
+  routineId: number | null; // set when this row is a daily routine
   date: string;
   title: string;
   completed: boolean;
-  tag: string; // a goal category, "Project" or "Learning"
+  tag: string; 
   source: string | null;
-  href: string | null; // opens a lesson
+  href: string | null; 
+  custom: boolean; // your own task: it can be pinned as a daily routine
 };
 
 export type PlanCandidate = {

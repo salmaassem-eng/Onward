@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { CheckCircle2, Plus } from "lucide-react";
 import type { PlanCandidate, PlanItemView } from "@/lib/plan";
 import AddTaskModal from "./AddTaskModal";
 import PlanItemRow from "./PlanItemRow";
@@ -15,7 +15,10 @@ type TodayCardProps = {
 
 export default function TodayCard({ items, today, candidates }: TodayCardProps) {
   const [adding, setAdding] = useState(false);
-  const done = items.filter((i) => i.completed).length;
+
+  // finished tasks leave the list, but still count in "x of y"
+  const open = items.filter((i) => !i.completed);
+  const done = items.length - open.length;
 
   return (
     <section className="min-w-0">
@@ -50,10 +53,18 @@ export default function TodayCard({ items, today, candidates }: TodayCardProps) 
             Add a task
           </button>
         </div>
+      ) : open.length === 0 ? (
+        <div className="rounded-2xl border border-green-100 bg-green-50 px-6 py-10 text-center">
+          <CheckCircle2 className="mx-auto h-8 w-8 text-green-600" />
+          <p className="font-heading mt-3 font-semibold text-stone-900">All done for today</p>
+          <p className="mt-1 text-sm text-stone-500">
+            Nice work. Add something else, or enjoy the rest of your day.
+          </p>
+        </div>
       ) : (
         <ul className="space-y-2">
-          {items.map((item) => (
-            <PlanItemRow key={item.id} item={item} today={today} />
+          {open.map((item) => (
+            <PlanItemRow key={item.key} item={item} today={today} undoable />
           ))}
         </ul>
       )}

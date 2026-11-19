@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Search, X } from "lucide-react";
-import { toast } from "react-toastify";
+import { Check, Pin, Search, X } from "lucide-react"; import { toast } from "react-toastify";
 import { addCustomPlanItem, addLinkedPlanItems } from "@/app/actions/plan";
 import { weekdayName } from "@/lib/dates";
 import { CATEGORIES } from "@/lib/goals";
@@ -43,6 +42,7 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [errors, setErrors] = useState<TaskFormErrors>({});
   const [busy, setBusy] = useState(false);
+  const [repeat, setRepeat] = useState(false);
 
   const q = query.trim().toLowerCase();
   const shown = candidates.filter((c) => `${c.title} ${c.source}`.toLowerCase().includes(q));
@@ -79,10 +79,10 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
       const result =
         tab === "pick"
           ? await addLinkedPlanItems(
-              date,
-              candidates.filter((c) => picked.has(c.key)).map((c) => ({ kind: c.kind, id: c.id }))
-            )
-          : await addCustomPlanItem(date, title, category);
+            date,
+            candidates.filter((c) => picked.has(c.key)).map((c) => ({ kind: c.kind, id: c.id }))
+          )
+          : await addCustomPlanItem(date, title, category, repeat);
 
       if (!result.ok) {
         if (result.errors) {
@@ -93,11 +93,15 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
         return;
       }
 
-      if (result.added === 0) toast.info("Already in your plan for that day.");
-      else
+      if (tab === "new" && repeat) {
+        toast.success(`Pinned "${title.trim()}" as a daily routine.`);
+      } else if (result.added === 0) {
+        toast.info("Already in your plan for that day.");
+      } else {
         toast.success(
           `Added ${result.added} ${result.added === 1 ? "task" : "tasks"} to ${weekdayName(date)}.`
         );
+      }
       onClose();
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -107,8 +111,7 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
   }
 
   const tabClass = (active: boolean) =>
-    `flex-1 rounded-lg py-2 text-sm font-semibold transition ${
-      active ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"
+    `flex-1 rounded-lg py-2 text-sm font-semibold transition ${active ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"
     }`;
 
   return (
@@ -132,8 +135,7 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 pb-2">
         <FormField
-          label="Day"
-          id="plan-date"
+          label={tab === "new" && repeat ? "Starts on" : "Day"} id="plan-date"
           type="date"
           min={minDate}
           value={date}
@@ -184,14 +186,12 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
                           type="button"
                           aria-pressed={on}
                           onClick={() => toggle(c.key)}
-                          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                            on ? "border-green-400 bg-green-50" : "border-stone-200 hover:bg-stone-50"
-                          }`}
+                          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${on ? "border-green-400 bg-green-50" : "border-stone-200 hover:bg-stone-50"
+                            }`}
                         >
                           <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${
-                              on ? "border-green-500 bg-green-500 text-white" : "border-stone-300"
-                            }`}
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${on ? "border-green-500 bg-green-500 text-white" : "border-stone-300"
+                              }`}
                           >
                             {on && <Check className="h-3 w-3" strokeWidth={3} />}
                           </span>
@@ -238,15 +238,31 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
                     type="button"
                     aria-pressed={category === c}
                     onClick={() => setCategory(c)}
-                    className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
-                      category === c
-                        ? "border-green-600 bg-green-50 text-green-700"
-                        : "border-stone-200 text-stone-500 hover:bg-stone-50"
-                    }`}
+                    className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${category === c
+                      ? "border-green-600 bg-green-50 text-green-700"
+                      : "border-stone-200 text-stone-500 hover:bg-stone-50"
+                      }`}
                   >
                     {c}
                   </button>
                 ))}
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 p-3 transition hover:bg-stone-50">
+                  <input
+                    type="checkbox"
+                    checked={repeat}
+                    onChange={(e) => setRepeat(e.target.checked)}
+                    className="mt-1 h-4 w-4 accent-green-600"
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-stone-900">
+                      <Pin className="h-3.5 w-3.5" />
+                      Repeat every day
+                    </span>
+                    <span className="block text-xs text-stone-400">
+                      Pins it as a daily routine. It shows in Today every day, starting from the day you chose.
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -257,7 +273,9 @@ function Body({ onClose, defaultDate, minDate, candidates }: AddTaskModalProps) 
         <Button type="submit" loading={busy}>
           {tab === "pick" && picked.size > 0
             ? `Add ${picked.size} ${picked.size === 1 ? "task" : "tasks"} →`
-            : "Add to plan →"}
+            : tab === "new" && repeat
+              ? "Pin as daily routine →"
+              : "Add to plan →"}
         </Button>
       </div>
     </form>
