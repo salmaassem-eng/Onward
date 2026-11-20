@@ -1,6 +1,7 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/db";
-import { planItems } from "@/db/schema";
+import { planItems, routineChecks, routines } from "@/db/schema";
+import { addDays } from "./dates";
 import type { PlanItemView } from "./plan";
 
 export async function getPlanItems(
@@ -8,34 +9,92 @@ export async function getPlanItems(
   from: string,
   to: string
 ): Promise<PlanItemView[]> {
-  const rows = await db.query.planItems.findMany({
-    where: and(
-      eq(planItems.userId, userId),
-      gte(planItems.date, from),
-      lte(planItems.date, to)
-    ),
-    with: {
-      goalStep: { with: { goal: { columns: { title: true, category: true } } } },
-      goalSubstep: {
-        with: {
-          step: { with: { goal: { columns: { title: true, category: true } } } },
+  const [rows, routineRows] = await Promise.all([
+    db.query.planItems.findMany({
+      where: and(
+        eq(planItems.userId, userId),
+        gte(planItems.date, from),
+        lte(planItems.date, to)
+      ),
+      with: {
+        goalStep: { with: { goal: { columns: { title: true, category: true } } } },
+        goalSubstep: {
+          with: {
+            step: { with: { goal: { columns: { title: true, category: true } } } },
+          },
+        },
+        projectMilestone: { with: { project: { columns: { title: true } } } },
+        projectTask: {
+          with: { milestone: { with: { project: { columns: { title: true } } } } },
+        },
+        courseLesson: {
+          with: {
+            module: { with: { course: { columns: { title: true, url: true } } } },
+          },
         },
       },
-      projectMilestone: { with: { project: { columns: { title: true } } } },
-      projectTask: {
-        with: { milestone: { with: { project: { columns: { title: true } } } } },
-      },
-      courseLesson: {
-        with: {
-          module: { with: { course: { columns: { title: true, url: true } } } },
-        },
-      },
-    },
-    orderBy: (p, { asc }) => [asc(p.date), asc(p.id)],
-  });
+      orderBy: (p, { asc }) => [asc(p.date), asc(p.id)],
+    }),
+    // routines that repeat on at least one day of this range
+    db
+      .select()
+      .from(routines)
+      .where(
+        and(
+          eq(routines.userId, userId),
+          lte(routines.startDate, to),
+          or(isNull(routines.endDate), gte(routines.endDate, from))
+        )
+      )
+      .orderBy(asc(routines.id)),
+  ]);
 
-  return rows.map((row): PlanItemView => {
-    const base = { id: row.id, date: row.date, href: null as string | null };
+  const checks: { routineId: number; date: string }[] =
+    routineRows.length === 0
+      ? []
+      : await db
+          .select({ routineId: routineChecks.routineId, date: routineChecks.date })
+          .from(routineChecks)
+          .where(
+            and(
+              inArray(routineChecks.routineId, routineRows.map((r) => r.id)),
+              gte(routineChecks.date, from),
+              lte(routineChecks.date, to)
+            )
+          );
+  const done = new Set(checks.map((c) => `${c.routineId}:${c.date}`));
+
+  const days: string[] = [];
+  for (let d = from; d <= to && days.length < 35; d = addDays(d, 1)) days.push(d);
+
+  const routineViews: PlanItemView[] = routineRows.flatMap((r) =>
+    days
+      .filter((d) => d >= r.startDate && (!r.endDate || d <= r.endDate))
+      .map(
+        (d): PlanItemView => ({
+          key: `r-${r.id}-${d}`,
+          id: r.id,
+          routineId: r.id,
+          date: d,
+          title: r.title,
+          completed: done.has(`${r.id}:${d}`),
+          tag: r.category,
+          source: null,
+          href: null,
+          custom: false,
+        })
+      )
+  );
+
+  const planViews = rows.map((row): PlanItemView => {
+    const base = {
+      key: `p-${row.id}`,
+      id: row.id,
+      routineId: null as number | null,
+      date: row.date,
+      href: null as string | null,
+      custom: false,
+    };
 
     if (row.courseLesson) {
       const { module } = row.courseLesson;
@@ -92,6 +151,16 @@ export async function getPlanItems(
       completed: row.completed,
       tag: row.category ?? "Personal",
       source: null,
+      custom: true,
     };
   });
+
+  // by day, and pinned routines first inside each day
+  return [...routineViews, ...planViews].sort((a, b) =>
+    a.date === b.date
+      ? Number(b.routineId !== null) - Number(a.routineId !== null)
+      : a.date < b.date
+      ? -1
+      : 1
+  );
 }

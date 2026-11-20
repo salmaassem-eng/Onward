@@ -1,7 +1,8 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray ,count ,isNull} from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { addDays, isValidDate } from "@/lib/dates";
 import { db } from "@/db";
 import {
   courseLessons,
@@ -14,6 +15,7 @@ import {
   projectMilestones,
   projects,
   projectTasks,
+  routineChecks, routines,
 } from "@/db/schema";
 import type { Category } from "@/lib/goals";
 import {
@@ -162,10 +164,21 @@ export async function addLinkedPlanItems(
   return { ok: true, added: toInsert.size };
 }
 
+const MAX_ROUTINES = 20;
+
+async function activeRoutineCount(userId: number) {
+  const [row] = await db
+    .select({ n: count() })
+    .from(routines)
+    .where(and(eq(routines.userId, userId), isNull(routines.endDate)));
+  return row?.n ?? 0;
+}
+
 export async function addCustomPlanItem(
   date: string,
   title: string,
-  category: string
+  category: string,
+  repeatDaily = false
 ): Promise<PlanResult> {
   const user = await requireUser();
   const today = await getToday();
@@ -173,12 +186,27 @@ export async function addCustomPlanItem(
   const errors = validateCustomTask({ title, category, date }, today);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
-  await db.insert(planItems).values({
-    userId: user.id,
-    date,
-    title: title.trim(),
-    category: category as Category,
-  });
+  if (repeatDaily === true) {
+    if ((await activeRoutineCount(user.id)) >= MAX_ROUTINES) {
+      return {
+        ok: false,
+        message: `You can pin up to ${MAX_ROUTINES} daily routines. Unpin one first.`,
+      };
+    }
+    await db.insert(routines).values({
+      userId: user.id,
+      title: title.trim(),
+      category: category as Category,
+      startDate: date,
+    });
+  } else {
+    await db.insert(planItems).values({
+      userId: user.id,
+      date,
+      title: title.trim(),
+      category: category as Category,
+    });
+  }
 
   refresh();
   return { ok: true, added: 1 };
@@ -262,4 +290,121 @@ export async function removePlanItem(id: number) {
     .where(and(eq(planItems.id, id), eq(planItems.userId, user.id)));
 
   refresh();
+}
+
+// pin one of your own tasks: it becomes a daily routine
+export async function makeRoutine(itemId: number): Promise<PlanResult> {
+  const user = await requireUser();
+  const today = await getToday();
+  if (!Number.isInteger(itemId)) return { ok: false, message: "Invalid request." };
+
+  const [item] = await db
+    .select()
+    .from(planItems)
+    .where(and(eq(planItems.id, itemId), eq(planItems.userId, user.id)))
+    .limit(1);
+
+  const isCustom =
+    item &&
+    item.title &&
+    !item.goalStepId &&
+    !item.goalSubstepId &&
+    !item.projectMilestoneId &&
+    !item.projectTaskId &&
+    !item.courseLessonId;
+  if (!item || !isCustom) {
+    return { ok: false, message: "Only your own tasks can repeat every day." };
+  }
+
+  if ((await activeRoutineCount(user.id)) >= MAX_ROUTINES) {
+    return {
+      ok: false,
+      message: `You can pin up to ${MAX_ROUTINES} daily routines. Unpin one first.`,
+    };
+  }
+
+  const startDate = item.date >= today ? item.date : today;
+  const [routine] = await db
+    .insert(routines)
+    .values({
+      userId: user.id,
+      title: item.title!,
+      category: item.category ?? "Personal",
+      startDate,
+    })
+    .returning({ id: routines.id });
+
+  // a task from today or later turns into the routine; an older one stays as history
+  if (item.date >= today) {
+    if (item.completed) {
+      await db
+        .insert(routineChecks)
+        .values({ id: `${routine.id}:${item.date}`, routineId: routine.id, date: item.date })
+        .onConflictDoNothing();
+    }
+    await db.delete(planItems).where(eq(planItems.id, item.id));
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+// check or uncheck a routine for one day
+export async function toggleRoutine(routineId: number, date: string, completed: boolean) {
+  const user = await requireUser();
+  const today = await getToday();
+
+  if (!Number.isInteger(routineId) || typeof completed !== "boolean" || !isValidDate(date)) {
+    throw new Error("Invalid request");
+  }
+  if (date > today) throw new Error("That day hasn't started yet");
+
+  const [routine] = await db
+    .select({ startDate: routines.startDate, endDate: routines.endDate })
+    .from(routines)
+    .where(and(eq(routines.id, routineId), eq(routines.userId, user.id)))
+    .limit(1);
+  if (!routine || date < routine.startDate || (routine.endDate && date > routine.endDate)) {
+    throw new Error("Not found");
+  }
+
+  const id = `${routineId}:${date}`;
+  if (completed) {
+    await db.insert(routineChecks).values({ id, routineId, date }).onConflictDoNothing();
+  } else {
+    await db.delete(routineChecks).where(eq(routineChecks.id, id));
+  }
+
+  refresh();
+}
+
+// unpin: it stops from today (or from that day, if it is in the future). Past days keep their history.
+export async function stopRoutine(routineId: number, date: string): Promise<PlanResult> {
+  const user = await requireUser();
+  const today = await getToday();
+
+  if (!Number.isInteger(routineId) || !isValidDate(date)) {
+    return { ok: false, message: "Invalid request." };
+  }
+
+  const [routine] = await db
+    .select({ startDate: routines.startDate, endDate: routines.endDate })
+    .from(routines)
+    .where(and(eq(routines.id, routineId), eq(routines.userId, user.id)))
+    .limit(1);
+  if (!routine) return { ok: false, message: "Routine not found." };
+
+  const from = date > today ? date : today;
+  const last = addDays(from, -1);
+  const newEnd = routine.endDate && routine.endDate < last ? routine.endDate : last;
+
+  if (newEnd < routine.startDate) {
+    // it never had a finished day before today, so remove it completely
+    await db.delete(routines).where(eq(routines.id, routineId));
+  } else {
+    await db.update(routines).set({ endDate: newEnd }).where(eq(routines.id, routineId));
+  }
+
+  refresh();
+  return { ok: true };
 }

@@ -11,13 +11,15 @@ import {
   projectMilestones,
   projects,
   projectTasks,
+  routineChecks,
+  routines,
 } from "@/db/schema";
 import { summarizeActivity } from "./activity";
 import { dayFormatter, getTimezone } from "./timezone";
 
 export async function getActivitySummary(userId: number) {
   const dayOf = dayFormatter(await getTimezone());
-  const [steps, subs, milestones, tasks, custom, lessons] = await Promise.all([
+  const [steps, subs, milestones, tasks, custom, lessons, routineDays] = await Promise.all([
     db
       .select({ at: goalSteps.completedAt })
       .from(goalSteps)
@@ -61,6 +63,11 @@ export async function getActivitySummary(userId: number) {
       .innerJoin(courseModules, eq(courseModules.id, courseLessons.moduleId))
       .innerJoin(courses, eq(courses.id, courseModules.courseId))
       .where(and(eq(courses.userId, userId), isNotNull(courseLessons.completedAt))),
+    db
+      .select({ date: routineChecks.date })
+      .from(routineChecks)
+      .innerJoin(routines, eq(routines.id, routineChecks.routineId))
+      .where(eq(routines.userId, userId)),
   ]);
 
   const counts = new Map<string, number>();
@@ -69,6 +76,9 @@ export async function getActivitySummary(userId: number) {
     const day = dayOf(row.at);
     counts.set(day, (counts.get(day) ?? 0) + 1);
   }
+  for (const r of routineDays) {
+  counts.set(r.date, (counts.get(r.date) ?? 0) + 1);
+}
 
   return summarizeActivity(counts, dayOf(new Date()));
 }

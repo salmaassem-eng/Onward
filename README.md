@@ -80,6 +80,8 @@ It is a full-stack app: real accounts, a real database, server-side validation, 
 - Plan real items from your goals, projects and courses, or add your own tasks.
 - Ticking a planned item also ticks it in its Journey, Project or Course.
 - Move unfinished tasks to today or tomorrow.
+- Pin a task as a **daily routine**: it comes back every day and is checked off per day.
+- **Pin** tasks to keep them at the top. A pinned task that isn't finished follows you to Today on Home.
 
 ### Home
 - Day streak, a 28-day activity heatmap and live stats.
